@@ -1,0 +1,14 @@
+# Ignorando archivos
+*.sql
+*.env
+.DS_Store
+npm-debug.log*
+logs
+*.log
+debug.log
+Thumbs.db
+
+# Ignorando carpetas
+node_modules/
+.idea/
+.vscode/
