@@ -2,6 +2,8 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db.config');
 const Persons = require('./persons.model');
 const Years = require('./years.model');
+const Courses = require('./courses.model');
+
 
 const TeacherAssignments = sequelize.define('TeacherAssignments', {
     id: {
@@ -25,9 +27,13 @@ const TeacherAssignments = sequelize.define('TeacherAssignments', {
             key: 'id'
         }
     },
-    specialty: {
-        type: DataTypes.TEXT,
-        allowNull: true
+    courseId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: Courses,
+            key: 'id'
+        }
     },
     status: {
         type: DataTypes.BOOLEAN,
@@ -47,5 +53,10 @@ TeacherAssignments.belongsTo(Years, {
     foreignKey: 'yearId',
     as: 'years'
 });
+
+TeacherAssignments.belongsTo(Courses, {
+    foreignKey: 'courseId',
+    as: 'courses'
+})
 
 module.exports = TeacherAssignments;

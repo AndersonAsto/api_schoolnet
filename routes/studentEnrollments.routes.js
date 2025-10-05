@@ -4,5 +4,6 @@ const studentEnrollmentsController = require('../controllers/studentsEnrollments
 
 router.post('/studentEnrollments/create', studentEnrollmentsController.createStudentEnrollment);
 router.get('/studentEnrollments/list', studentEnrollmentsController.getStudentEnrollments);
+router.get("/studentEnrollments/bySchedule/:scheduleId", studentEnrollmentsController.getStudentsBySchedule);
 
 module.exports = router;

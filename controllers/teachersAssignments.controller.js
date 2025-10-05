@@ -1,16 +1,17 @@
 const TeacherAssignments = require('../models/teachersAssignments.model');
 const Persons = require('../models/persons.model');
 const Years = require('../models/years.model');
+const Couses = require('../models/courses.model');
 
 exports.createTeacherAssignament = async (req, res) => {
     try {
         
-        const { personId, yearId, specialty } = req.body;
+        const { personId, yearId, courseId } = req.body;
 
         if (!personId || !yearId)
             return res.status(400).json({ error: 'No ha completado algunos campos' });
 
-        const newTeacherAssignament = await TeacherAssignments.create({ personId, yearId, specialty });
+        const newTeacherAssignament = await TeacherAssignments.create({ personId, yearId, courseId });
         res.status(201).json(newTeacherAssignament);
 
     } catch (error) {
@@ -33,9 +34,14 @@ exports.getTeacherAssignaments = async (req, res) => {
                     model: Years,
                     as: 'years',
                     attributes: ['id', 'year']
+                },
+                {
+                    model: Couses,
+                    as: 'courses',
+                    attributes: ['id', 'course']
                 }
             ],
-            attributes: ['id', 'specialty', 'status', 'createdAt', 'updatedAt']
+            attributes: ['id', 'status', 'createdAt', 'updatedAt']
         });
         res.json(teacherAssignments)
         

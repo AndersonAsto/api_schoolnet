@@ -43,8 +43,12 @@ exports.login = async (req, res, next) => {
       id: user.id,
       username: user.userName,
       role: user.role,
+      user: {
+        id: user.id,
+        username: user.userName,
+        role: user.role
+      }
     });
-
   } catch (err) {
     next(err);
   }
