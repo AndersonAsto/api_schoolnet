@@ -27,6 +27,10 @@ const representativeAssignments = require('./routes/representativesAssignments.r
 const schedulesRoutes = require('./routes/schedules.routes');
 const assistanceRoutes = require('./routes/assistances.routes');
 const authRoutes = require('./routes/auth.routes');
+const qualificationRoutes = require('./routes/qualifications.routes');
+const examsRoutes = require('./routes/exams.routes');
+const tBAvaragesRoutes = require('./routes/teachingBlockAverage.route');
+const generalAverage = require('./routes/generalAverage.routes');
 const errorHandler = require('./middlewares/error.middleware');
 
 const corsOptions = {
@@ -77,6 +81,10 @@ app.use('/api', studentEnrollmentsRoutes);
 app.use('/api', representativeAssignments);
 app.use('/api', schedulesRoutes);
 app.use('/api', assistanceRoutes);
+app.use('/api', qualificationRoutes);
+app.use('/api', examsRoutes);
+app.use('/api', tBAvaragesRoutes);
+app.use('/api', generalAverage);
 
 app.get('/', (req, res) => {
     res.send('Bienvenido')

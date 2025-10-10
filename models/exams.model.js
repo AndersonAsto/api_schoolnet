@@ -1,11 +1,10 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db.config');
-const StudentsEnrollments = require('../models/studentsEnrollments.model');
-const Schedules = require('../models/schedules.model');
-const TeachingDays = require('../models/teachingDays.model');
+const Schedules = require('./schedules.model');
 const TeachingBlocks = require('./teachingBlocks.model');
+const StudentsEnrollments = require('./studentsEnrollments.model');
 
-const Qualifications = sequelize.define('Qualifications', {
+const Exams =  sequelize.define('Exams', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -29,55 +28,46 @@ const Qualifications = sequelize.define('Qualifications', {
     },
     teachingBlockId: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         references: {
             model: TeachingBlocks,
             key: 'id'
         }
     },
-    schoolDayId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: TeachingDays,
-            key: 'id'
-        }
-    },
-    rating: {
+    score: {
         type: DataTypes.DECIMAL(5,2),
-        allowNull: true
+        allowNull: false
     },
-    ratingDetail: {
-        type: DataTypes.TEXT,
-        allowNull: true,
+    maxScore: {
+        type: DataTypes.DECIMAL(5,2),
+        allowNull: false
+    },
+    type: {
+        type: DataTypes.ENUM('Examen', 'Práctica'),
+        allowNull: false
     },
     status: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
     }
 }, {
-    tableName: 'qualifications',
+    tableName: 'exams',
     timestamps: true
 });
 
-Qualifications.belongsTo(StudentsEnrollments, {
+Exams.belongsTo(StudentsEnrollments, {
     foreignKey: 'studentId',
     as: 'students'
 });
 
-Qualifications.belongsTo(Schedules, {
+Exams.belongsTo(Schedules, {
     foreignKey: 'scheduleId',
     as: 'schedules'
 });
 
-Qualifications.belongsTo(TeachingDays, {
-    foreignKey: 'schoolDayId',
-    as: 'schooldays'
-});
-
-Qualifications.belongsTo(TeachingBlocks, {
+Exams.belongsTo(TeachingBlocks, {
     foreignKey: 'teachingBlockId',
     as: 'teachingblocks'
 });
 
-module.exports = Qualifications;
+module.exports = Exams;

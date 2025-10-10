@@ -1,29 +1,39 @@
 const sequelize = require('../config/db.config');
-const Assistances = require('../models/assistances.model');
+const Qualifications = require('../models/qualifications.model');
 const StudentEnrollments = require('../models/studentsEnrollments.model');
 const Schedules = require('../models/schedules.model');
 const TeachingDays = require('../models/teachingDays.model');
-const Years = require('../models/years.model');
 const Persons = require('../models/persons.model');
+const Years = require('../models/years.model');
+const Assistances = require('../models/assistances.model');
 
+// Crear calificaciones en bulk
 exports.createBulk = async (req, res) => {
     try {
-        const assistances = req.body; // Array de asistencias
-        if (!Array.isArray(assistances) || assistances.length === 0) {
-            return res.status(400).json({ message: 'No se enviaron asistencias.' });
+        const qualifications = req.body; // Array de calificaciones
+        if (!Array.isArray(qualifications) || qualifications.length === 0) {
+            return res.status(400).json({ message: 'No se enviaron calificaciones.' });
         }
 
-        await Assistances.bulkCreate(assistances);
-        res.status(201).json({ message: 'Asistencias registradas correctamente.' });
+        // Si algún rating es null o vacío, se convierte en 0
+        qualifications.forEach(q => {
+            if (q.rating === null || q.rating === '' || q.rating === undefined) {
+                q.rating = 0;
+            }
+        });
+
+        await Qualifications.bulkCreate(qualifications);
+        res.status(201).json({ message: 'Calificaciones registradas correctamente.' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error al guardar asistencias.', error });
+        res.status(500).json({ message: 'Error al guardar calificaciones.', error });
     }
 };
 
-exports.getAssistances = async (req, res) => {
+// Obtener calificaciones completas con info de estudiante y horario
+exports.getQualifications = async (req, res) => {
     try {
-        const assistances = await Assistances.findAll({
+        const qualifications = await Qualifications.findAll({
             include: [
                 {
                     model: StudentEnrollments,
@@ -64,26 +74,27 @@ exports.getAssistances = async (req, res) => {
             ],
             order: [['id', 'ASC']]
         });
-        res.json(assistances);
+
+        res.json(qualifications);
 
     } catch (error) {
         console.error(error);
         res.status(500).json({
             status: false,
-            message: 'Error obteniendo asistencias'
+            message: 'Error obteniendo calificaciones'
         });
     }
 };
 
-exports.bulkUpdateAssistances = async (req, res) => {
+// Actualizar calificaciones existentes en bulk
+exports.bulkUpdateQualifications = async (req, res) => {
     try {
-        const updates = req.body; // [{id, assistance, assistanceDetail, scheduleId, schoolDayId, studentId}, ...]
+        const updates = req.body; // [{id, rating, ratingDetail, scheduleId, schoolDayId, studentId}, ...]
 
         if (!Array.isArray(updates) || updates.length === 0) {
             return res.status(400).json({ status: false, message: "No hay datos para actualizar" });
         }
 
-        // Usamos una transacción para seguridad
         const transaction = await sequelize.transaction();
 
         try {
@@ -92,10 +103,15 @@ exports.bulkUpdateAssistances = async (req, res) => {
                     throw new Error(`El registro no tiene ID: ${JSON.stringify(record)}`);
                 }
 
-                await Assistances.update(
+                // Si rating es null o vacío, convertir a 0
+                if (record.rating === null || record.rating === '' || record.rating === undefined) {
+                    record.rating = 0;
+                }
+
+                await Qualifications.update(
                     {
-                        assistance: record.assistance,
-                        assistanceDetail: record.assistanceDetail || null,
+                        rating: record.rating,
+                        ratingDetail: record.ratingDetail || "",
                         scheduleId: record.scheduleId,
                         schoolDayId: record.schoolDayId,
                         studentId: record.studentId,
@@ -108,7 +124,7 @@ exports.bulkUpdateAssistances = async (req, res) => {
             }
 
             await transaction.commit();
-            res.json({ status: true, message: "Asistencias actualizadas correctamente" });
+            res.json({ status: true, message: "Calificaciones actualizadas correctamente" });
 
         } catch (error) {
             await transaction.rollback();
@@ -119,12 +135,13 @@ exports.bulkUpdateAssistances = async (req, res) => {
         console.error(error);
         res.status(500).json({
             status: false,
-            message: "Error actualizando asistencias",
+            message: "Error actualizando calificaciones",
             error: error.message
         });
     }
 };
 
+// Obtener calificaciones por horario y día
 exports.getByScheduleAndDay = async (req, res) => {
     try {
         const { scheduleId, schoolDayId } = req.query;
@@ -136,11 +153,8 @@ exports.getByScheduleAndDay = async (req, res) => {
             });
         }
 
-        const assistances = await Assistances.findAll({
-            where: {
-                scheduleId: Number(scheduleId),
-                schoolDayId: Number(schoolDayId)
-            },
+        const qualifications = await Qualifications.findAll({
+            where: { scheduleId, schoolDayId },
             include: [
                 {
                     model: StudentEnrollments,
@@ -158,59 +172,34 @@ exports.getByScheduleAndDay = async (req, res) => {
             order: [['id', 'ASC']]
         });
 
-        res.json(assistances);
+        res.json(qualifications);
+
     } catch (error) {
         console.error(error);
         res.status(500).json({
             status: false,
-            message: "Error obteniendo asistencias"
+            message: "Error obteniendo calificaciones"
         });
     }
 };
 
 exports.getByStudentAndSchedule = async (req, res) => {
   const { studentId, scheduleId } = req.params;
-
   try {
-    const assistances = await Assistances.findAll({
-      where: {
-        studentId,
-        scheduleId
-      },
+    const qualifications = await Qualifications.findAll({
+      where: { studentId, scheduleId },
       include: [
-        {
-          model: StudentEnrollments,
-          as: 'students',
-          attributes: ['id'],
-          include: [
-            {
-              model: Persons,
-              as: 'persons',
-              attributes: ['id', 'names', 'lastNames']
-            }
-          ]
-        },
-        {
-          model: Schedules,
-          as: 'schedules',
-          attributes: ['id', 'courseId', 'gradeId', 'sectionId', 'teacherId', 'weekday']
-        },
         {
           model: TeachingDays,
           as: 'schooldays',
-          attributes: ['id', 'teachingDay']
+          attributes: ['id', 'teachingDay'],
         }
       ],
-      order: [['schooldayId', 'ASC']]
+      order: [['schoolDayId', 'ASC']],
     });
-
-    if (assistances.length === 0) {
-      return res.status(200).json({ message: "No se encontraron asistencias para este estudiante." });
-    }
-
-    res.status(200).json(assistances);
+    res.status(200).json(qualifications);
   } catch (error) {
-    console.error("❌ Error obteniendo asistencias por estudiante:", error);
-    res.status(500).json({ message: "Error obteniendo asistencias", error });
+    console.error('❌ Error al obtener calificaciones por estudiante y horario:', error);
+    res.status(500).json({ message: 'Error obteniendo calificaciones' });
   }
 };

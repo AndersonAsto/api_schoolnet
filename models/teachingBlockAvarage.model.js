@@ -1,21 +1,20 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db.config');
-const StudentsEnrollments = require('../models/studentsEnrollments.model');
-const Schedules = require('../models/schedules.model');
-const TeachingDays = require('../models/teachingDays.model');
+const StudentsEnrollments = require('./studentsEnrollments.model');
+const Schedules = require('./schedules.model');
 const TeachingBlocks = require('./teachingBlocks.model');
 
-const Qualifications = sequelize.define('Qualifications', {
+const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true
     },
-    studentId: {
+    teachingBlockId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: StudentsEnrollments,
+            model: TeachingBlocks,
             key: 'id'
         }
     },
@@ -27,57 +26,48 @@ const Qualifications = sequelize.define('Qualifications', {
             key: 'id'
         }
     },
-    teachingBlockId: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-            model: TeachingBlocks,
-            key: 'id'
-        }
-    },
-    schoolDayId: {
+    studentId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: TeachingDays,
+            model: StudentsEnrollments,
             key: 'id'
         }
     },
-    rating: {
+    gradeAvarage: {
         type: DataTypes.DECIMAL(5,2),
-        allowNull: true
+        allowNull: false
     },
-    ratingDetail: {
-        type: DataTypes.TEXT,
-        allowNull: true,
+    examAvarage: {
+        type: DataTypes.DECIMAL(5,2),
+        allowNull: false
+    },
+    teachingblockavarage: {
+        type: DataTypes.DECIMAL(5,2),
+        allowNull: false
     },
     status: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
     }
 }, {
-    tableName: 'qualifications',
+    tableName: 'teachingblockavarage',
     timestamps: true
 });
 
-Qualifications.belongsTo(StudentsEnrollments, {
+TeachingBlockAvarage.belongsTo(StudentsEnrollments, {
     foreignKey: 'studentId',
     as: 'students'
 });
 
-Qualifications.belongsTo(Schedules, {
+TeachingBlockAvarage.belongsTo(Schedules, {
     foreignKey: 'scheduleId',
     as: 'schedules'
 });
 
-Qualifications.belongsTo(TeachingDays, {
-    foreignKey: 'schoolDayId',
-    as: 'schooldays'
-});
-
-Qualifications.belongsTo(TeachingBlocks, {
+TeachingBlockAvarage.belongsTo(TeachingBlocks, {
     foreignKey: 'teachingBlockId',
     as: 'teachingblocks'
 });
 
-module.exports = Qualifications;
+module.exports = TeachingBlockAvarage;
