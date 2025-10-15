@@ -29,7 +29,7 @@ const TeacherAssignments = sequelize.define('TeacherAssignments', {
     },
     courseId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: Courses,
             key: 'id'

@@ -31,6 +31,7 @@ const qualificationRoutes = require('./routes/qualifications.routes');
 const examsRoutes = require('./routes/exams.routes');
 const tBAvaragesRoutes = require('./routes/teachingBlockAverage.route');
 const generalAverage = require('./routes/generalAverage.routes');
+const incidentsRoutes = require('./routes/incidents.route');
 const errorHandler = require('./middlewares/error.middleware');
 
 const corsOptions = {
@@ -85,6 +86,7 @@ app.use('/api', qualificationRoutes);
 app.use('/api', examsRoutes);
 app.use('/api', tBAvaragesRoutes);
 app.use('/api', generalAverage);
+app.use('/api', incidentsRoutes);
 
 app.get('/', (req, res) => {
     res.send('Bienvenido')
