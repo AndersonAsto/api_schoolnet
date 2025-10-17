@@ -53,19 +53,26 @@ exports.updateCourse = async (req, res) => {
 }
 
 exports.deleteCourseById = async (req, res) => {
-    try {
+  try {
+    const { id } = req.params;
+    const deleted = await Courses.destroy({ where: { id } });
 
-        const { id } = req.params;
-        const deleted = await Courses.destroy({ where: { id } });
-
-        if (deleted) {
-            res.status(200).json({ message: 'Curso eliminado correctamente' });
-        } else {
-            res.status(404).json({ message: 'Curso no encontrado' });
-        }
-
-    } catch (error) {
-        console.error(error)
-        res.status(500).json({ message: 'Error al eliminar curso', error });
+    if (deleted) {
+      return res.status(200).json({ message: 'Curso eliminado correctamente' });
+    } else {
+      return res.status(404).json({ message: 'Curso no encontrado' });
     }
-}
+
+  } catch (error) {
+    console.error(error);
+
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(409).json({
+        message: 'No se puede eliminar el curso, está asociado a otros registros',
+        error: error.message
+      });
+    }
+
+    return res.status(500).json({ message: 'Error al eliminar curso', error });
+  }
+};

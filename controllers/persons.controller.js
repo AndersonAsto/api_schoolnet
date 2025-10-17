@@ -110,21 +110,34 @@ exports.updatePerson = async (req, res) => {
 }
 
 exports.deletePersonById = async (req, res) => {
-    try {
+  try {
+    const { id } = req.params;
 
-        const { id } = req.params;
-        const deleted = await Persons.destroy({ 
-            where: { id }
-        });
-
-        if(deleted) {
-            res.status(200).json({ message: 'Persona eliminada correctamente' });
-        } else {
-            res.status(404).json({ message: 'Persona no encontrada' });
-        }
-        
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error al eliminar persona', error });
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: 'ID inválido o no proporcionado' });
     }
-}
+
+    const deleted = await Persons.destroy({ where: { id } });
+
+    if (deleted === 0) {
+      return res.status(404).json({ message: 'Persona no encontrada' });
+    }
+
+    res.status(200).json({ message: 'Persona eliminada correctamente' });
+
+  } catch (error) {
+    console.error('❌ Error al eliminar persona:', error.message);
+
+    if (error.name === 'SequelizeForeignKeyConstraintError' ||
+        error.parent?.code === 'ER_ROW_IS_REFERENCED_2') {
+      return res.status(409).json({
+        message: 'No se puede eliminar la persona porque está asociada a otros registros (conflicto de integridad).'
+      });
+    }
+
+    res.status(500).json({
+      message: 'Error al eliminar persona',
+      error: error.message
+    });
+  }
+};

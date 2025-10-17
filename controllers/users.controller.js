@@ -110,19 +110,24 @@ exports.updateUser = async (req, res) => {
 }
 
 exports.deleteStudentById = async (req, res) => {
-    try {
+  try {
+    const { id } = req.params;
+    const deleted = await Users.destroy({ where: { id } });
 
-        const { id } = req.params;
-        const deleted = await Users.destroy({where: {id}});
-
-        if (deleted) {
-            res.status(200).json({ message: 'Usuario eliminado correctamente' });
-        } else {
-            res.status(404).json({ message: 'Usuario no encontrado' });
-        }
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error al eliminar usuario', error });
+    if (deleted) {
+      res.status(200).json({ message: 'Usuario eliminado correctamente' });
+    } else {
+      res.status(404).json({ message: 'Usuario no encontrado' });
     }
-}
+
+  } catch (error) {
+    console.error(error);
+
+    // Si el error viene de clave foránea u otra restricción
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(409).json({ message: 'No se puede eliminar el usuario, tiene dependencias asociadas.' });
+    }
+
+    res.status(500).json({ message: 'Error al eliminar usuario', error });
+  }
+};

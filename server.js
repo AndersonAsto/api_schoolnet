@@ -1,5 +1,4 @@
 require('dotenv').config({ quiet: true });
-
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
@@ -100,10 +99,16 @@ sequelize.authenticate().then(() => {
 }).then(() => {
 
     console.log('Base de datos sincronizada.');
-    app.listen(PORT, () => {
-        console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-    });
+
+    if (process.env.NODE_ENV !=='test'){
+        app.listen(PORT, () => {
+            console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+        });
+    }
+    
 
 }).catch(err => {
     console.error('Error al conectar con la base de datos:', err.message);
 });
+
+module.exports = app
