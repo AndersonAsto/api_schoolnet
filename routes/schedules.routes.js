@@ -6,6 +6,6 @@ router.post('/schedules/create', schedulesController.createSchedule);
 router.get('/schedules/list', schedulesController.getSchedules);
 router.get("/schedules/by-user/:userId", schedulesController.getSchedulesByUser);
 router.get('/schedules/by-user/:userId/year/:yearId', schedulesController.getSchedulesByUserAndYear);
-
+router.get('/schedules/by-teacher/:teacherId', schedulesController.getSchedulesByTeacher);
 
 module.exports = router;

@@ -32,6 +32,7 @@ const tBAvaragesRoutes = require('./routes/teachingBlockAverage.route');
 const generalAverage = require('./routes/generalAverage.routes');
 const incidentsRoutes = require('./routes/incidents.route');
 const errorHandler = require('./middlewares/error.middleware');
+const scheduleSchoolDaysRoutes = require('./routes/scheduleSchoolDays.routes');
 
 const corsOptions = {
     origin: (origin, callback) => {
@@ -86,6 +87,7 @@ app.use('/api', examsRoutes);
 app.use('/api', tBAvaragesRoutes);
 app.use('/api', generalAverage);
 app.use('/api', incidentsRoutes);
+app.use('/api', scheduleSchoolDaysRoutes);
 
 app.get('/', (req, res) => {
     res.send('Bienvenido')
@@ -106,7 +108,6 @@ sequelize.authenticate().then(() => {
         });
     }
     
-
 }).catch(err => {
     console.error('Error al conectar con la base de datos:', err.message);
 });

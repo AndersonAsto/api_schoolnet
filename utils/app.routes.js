@@ -18,6 +18,7 @@ const examsRoutes = require('../routes/exams.routes');
 const tBAvaragesRoutes = require('../routes/teachingBlockAverage.route');
 const generalAverage = require('../routes/generalAverage.routes');
 const incidentsRoutes = require('../routes/incidents.route');
+const scheduleSchoolDaysRoutes = require('../routes/scheduleSchoolDays.routes');
 
 module.exports = (app) => {
   app.use('/api', yearsRoutes);
@@ -39,4 +40,5 @@ module.exports = (app) => {
   app.use('/api', tBAvaragesRoutes);
   app.use('/api', generalAverage);
   app.use('/api', incidentsRoutes);
+  app.use('/api', scheduleSchoolDaysRoutes);
 };
