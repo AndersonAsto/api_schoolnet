@@ -108,7 +108,7 @@ exports.getStudentsBySchedule = async (req, res) => {
           attributes: ["id", "year"],
         },
       ],
-      order: [["id", "ASC"]],
+      order: [[{ model: Persons, as: "persons" }, "lastNames", "ASC"]],
     });
 
     return res.status(200).json(students);

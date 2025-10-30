@@ -5,6 +5,7 @@ const Schedules = require('../models/schedules.model');
 const sequelize = require('../config/db.config');
 const { Op } = require('sequelize');
 const Users = require('../models/users.model');
+const Years = require('../models/years.model');
 
 // POST automático de ScheduleSchoolDays
 exports.generateScheduleDays = async (req, res) => {
@@ -234,13 +235,11 @@ exports.getDaysBySchedule = async (req, res) => {
       return res.status(404).json({ message: "No se encontraron días asociados a este horario." });
     }
 
-    res.json({
-      total: days.length,
-      scheduleId,
-      days
-    });
+    res.status(200).json(days);
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error al obtener los días del horario", error: error.message });
   }
 };
+
