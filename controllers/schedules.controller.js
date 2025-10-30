@@ -22,7 +22,7 @@ exports.createSchedule = async (req, res) => {
     } = req.body;
 
     if (!yearId || !teacherId || !courseId || !gradeId || !sectionId || !weekday || !startTime || !endTime)
-      return res.status(400).json({ message: 'No ha completado los campos requeridos:', error });
+      return res.status(400).json({ message: 'No ha completado los campos requeridos:' });
 
     const newSchedule = await Schedules.create({
       yearId,
