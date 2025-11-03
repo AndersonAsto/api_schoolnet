@@ -33,6 +33,8 @@ const generalAverage = require('./routes/generalAverage.routes');
 const incidentsRoutes = require('./routes/incidents.route');
 const errorHandler = require('./middlewares/error.middleware');
 const scheduleSchoolDaysRoutes = require('./routes/scheduleSchoolDays.routes');
+const teacherGroupsRoutes = require('./routes/teacherGroups.routes');
+const annualAverageRoutes = require('./routes/annualAverages.routes');
 
 const corsOptions = {
     origin: (origin, callback) => {
@@ -88,6 +90,8 @@ app.use('/api', tBAvaragesRoutes);
 app.use('/api', generalAverage);
 app.use('/api', incidentsRoutes);
 app.use('/api', scheduleSchoolDaysRoutes);
+app.use('/api', teacherGroupsRoutes);
+app.use('/api', annualAverageRoutes);
 
 app.get('/', (req, res) => {
     res.send('Bienvenido')

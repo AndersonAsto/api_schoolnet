@@ -4,6 +4,7 @@ const Persons = require('../models/persons.model');
 const Grades = require('../models/grades.model');
 const Years = require('../models/years.model');
 const Schedules = require('../models/schedules.model');
+const TeacherGroups = require('../models/teacherGroups.model');
 
 exports.createStudentEnrollment = async (req, res) => {
     try {
@@ -84,6 +85,63 @@ exports.getStudentsBySchedule = async (req, res) => {
         gradeId: schedule.gradeId,
         sectionId: schedule.sectionId,
         yearId: schedule.yearId, // 🔸 opcional si deseas filtrar también por año
+        status: true,
+      },
+      include: [
+        {
+          model: Persons,
+          as: "persons",
+          attributes: ["id", "names", "lastNames", "role"],
+        },
+        {
+          model: Grades,
+          as: "grades",
+          attributes: ["id", "grade"],
+        },
+        {
+          model: Sections,
+          as: "sections",
+          attributes: ["id", "seccion"],
+        },
+        {
+          model: Years,
+          as: "years",
+          attributes: ["id", "year"],
+        },
+      ],
+      order: [[{ model: Persons, as: "persons" }, "lastNames", "ASC"]],
+    });
+
+    return res.status(200).json(students);
+  } catch (error) {
+    console.error("Error en getStudentsBySchedule:", error);
+    return res.status(500).json({
+      message: "Error al obtener los estudiantes por horario",
+      error: error.message,
+    });
+  }
+};
+
+exports.getStudentsByGroup = async (req, res) => {
+  try {
+    const { asigmentId } = req.params;
+
+    if (!asigmentId) {
+      return res.status(400).json({ message: "El identificador del grupo es requerido" });
+    }
+
+    // 🔹 Buscar el horario seleccionado
+    const group = await TeacherGroups.findByPk(asigmentId);
+    if (!group) {
+      return res.status(404).json({ message: "Grupo no encontrado" });
+    }
+
+    // 🔹 Buscar estudiantes del mismo grado y sección (y opcionalmente mismo año)
+    const students = await StudentEnrollments.findAll({
+      where: {
+        gradeId: group.gradeId,
+        sectionId: group.sectionId,
+        yearId: group.yearId,
         status: true,
       },
       include: [

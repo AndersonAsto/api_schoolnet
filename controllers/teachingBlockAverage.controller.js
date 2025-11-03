@@ -9,89 +9,106 @@ const Grades = require("../models/grades.model");
 const Sections = require("../models/sections.model");
 const Persons = require("../models/persons.model");
 const Years = require("../models/years.model");
+const Qualifications = require("../models/qualifications.model");
+const TeacherGroups = require("../models/teacherGroups.model");
 
 exports.calculateAndSaveAverage = async (req, res) => {
   try {
-    const { studentId, scheduleId, teachingBlockId } = req.body;
+    const { studentId, assignmentId, teachingBlockId } = req.body;
 
-    // Validación básica
-    if (!studentId || !scheduleId || !teachingBlockId) {
-      return res.status(400).json({
-        message: "Faltan parámetros obligatorios (studentId, scheduleId, teachingBlockId).",
-      });
+    if (!studentId || !assignmentId || !teachingBlockId) {
+      return res.status(400).json({ message: 'Faltan parámetros obligatorios (studentId, assignmentId, teachingBlockId)' });
     }
 
-    // 1️⃣ Obtener el rango de fechas del bloque lectivo
-    const block = await TeachingBlocks.findByPk(teachingBlockId);
-    if (!block) {
-      return res.status(404).json({ message: "Bloque lectivo no encontrado." });
+    // 1️⃣ Obtener info del grupo docente (para cruzar grado, sección, curso)
+    const group = await TeacherGroups.findByPk(assignmentId);
+    if (!group) {
+      return res.status(404).json({ message: 'TeacherGroup no encontrado' });
     }
 
-    const { startDay, endDay } = block;
+    const { gradeId, sectionId, courseId } = group;
 
-    // 2️⃣ Buscar todas las calificaciones y exámenes del estudiante dentro del rango
+    // 2️⃣ Buscar calificaciones diarias en Qualifications a través de Schedules
+    const qualifications = await Qualifications.findAll({
+      include: [
+        {
+          model: Schedules,
+          as: 'schedules',
+          where: {
+            gradeId,
+            sectionId,
+            courseId
+          },
+          attributes: []
+        }
+      ],
+      where: {
+        studentId,
+        teachingBlockId,
+        status: true
+      },
+      attributes: ['rating']
+    });
+
+    const dailyAvarage = qualifications.length
+      ? qualifications.reduce((sum, q) => sum + parseFloat(q.rating || 0), 0) / qualifications.length
+      : 0;
+
+    // 3️⃣ Buscar prácticas
+    const practices = await Exams.findAll({
+      where: {
+        studentId,
+        assigmentId: assignmentId,
+        teachingBlockId,
+        type: 'Práctica',
+        status: true
+      },
+      attributes: ['score']
+    });
+
+    const practiceAvarage = practices.length
+      ? practices.reduce((sum, e) => sum + parseFloat(e.score || 0), 0) / practices.length
+      : 0;
+
+    // 4️⃣ Buscar exámenes
     const exams = await Exams.findAll({
       where: {
         studentId,
-        scheduleId,
+        assigmentId: assignmentId,
         teachingBlockId,
-        type: { [Op.in]: ["Práctica", "Examen"] },
+        type: 'Examen',
+        status: true
       },
+      attributes: ['score']
     });
 
-    if (!exams.length) {
-      return res.status(404).json({
-        message: "No se encontraron calificaciones ni exámenes en este bloque lectivo.",
-      });
-    }
-
-    // 3️⃣ Separar prácticas y exámenes
-    const grades = exams.filter(e => e.type === "Práctica");
-    const tests = exams.filter(e => e.type === "Examen");
-
-    // 4️⃣ Calcular los promedios simples
-    const gradeAverage = grades.length
-      ? grades.reduce((sum, e) => sum + parseFloat(e.score), 0) / grades.length
+    const examAvarage = exams.length
+      ? exams.reduce((sum, e) => sum + parseFloat(e.score || 0), 0) / exams.length
       : 0;
 
-    const examAverage = tests.length
-      ? tests.reduce((sum, e) => sum + parseFloat(e.score), 0) / tests.length
-      : 0;
+    // 5️⃣ Promedio ponderado
+    const teachingBlockAvarage = (dailyAvarage * 0.3 + practiceAvarage * 0.3 + examAvarage * 0.4).toFixed(2);
 
-    // 5️⃣ Ponderación: 0.6 prácticas + 0.4 exámenes
-    const teachingBlockAverage = (gradeAverage * 0.6) + (examAverage * 0.4);
-
-    // 6️⃣ Guardar o actualizar el registro
-    const [record, created] = await TeachingBlockAvarage.findOrCreate({
-      where: { studentId, scheduleId, teachingBlockId },
-      defaults: {
-        gradeAvarage: gradeAverage.toFixed(2),
-        examAvarage: examAverage.toFixed(2),
-        teachingblockavarage: teachingBlockAverage.toFixed(2),
-        status: true,
-      },
+    // 6️⃣ Guardar o actualizar TeachingBlockAvarage
+    await TeachingBlockAvarage.upsert({
+      studentId,
+      assignmentId,
+      teachingBlockId,
+      dailyAvarage,
+      practiceAvarage,
+      examAvarage,
+      teachingBlockAvarage,
+      status: true,
+      updatedAt: new Date()
     });
-
-    if (!created) {
-      // Si ya existe, actualizamos los promedios
-      await record.update({
-        gradeAvarage: gradeAverage.toFixed(2),
-        examAvarage: examAverage.toFixed(2),
-        teachingblockavarage: teachingBlockAverage.toFixed(2),
-      });
-    }
 
     return res.status(200).json({
-      message: created ? "Promedio registrado correctamente." : "Promedio actualizado correctamente.",
-      data: record,
+      message: '✅ Promedio calculado correctamente',
+      data: { dailyAvarage, practiceAvarage, examAvarage, teachingBlockAvarage }
     });
-
   } catch (error) {
-    console.error("❌ Error al calcular el promedio de bloque lectivo:", error);
-    res.status(500).json({
-      message: "Error al calcular el promedio de bloque lectivo.",
-      error: error.message,
-    });
+    console.error('❌ Error al calcular promedio:', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };
 
@@ -108,70 +125,44 @@ exports.getAveragesByStudent = async (req, res) => {
           attributes: ["id", "teachingBlock", "startDay", "endDay"],
         },
         {
-          model: Schedules,
-          as: "schedules",
-          attributes: ["id", "weekday", "startTime", "endTime"],
+          model: TeacherGroups,
+          as: "teachergroups",
+          attributes: ["id"],
           include: [
-            {
-              model: Courses,
-              as: "courses",
-              attributes: ["id", "course"],
-            },
-            {
-              model: Grades,
-              as: "grades",
-              attributes: ["id", "grade"],
-            },
-            {
-              model: Sections,
-              as: "sections",
-              attributes: ["id", "seccion"],
-            },
-            {
-              model: Years,
-              as: "years",
-              attributes: ['id', 'year']
-            }
+            { model: Courses, as: "courses", attributes: ["id", "course"] },
+            { model: Grades, as: "grades", attributes: ["id", "grade"] },
+            { model: Sections, as: "sections", attributes: ["id", "seccion"] },
+            { model: Years, as: "years", attributes: ["id", "year"] }
           ],
         },
         {
           model: StudentsEnrollments,
           as: "students",
           attributes: ["id"],
-          include: [
-            {
-              model: Persons,
-              as: "persons",
-              attributes: ["id", "names", "lastNames"],
-            },
-          ],
+          include: [{ model: Persons, as: "persons", attributes: ["id", "names", "lastNames"] }],
         },
       ],
       order: [["teachingBlockId", "ASC"]],
     });
 
     if (!averages.length) {
-      return res.status(404).json({
-        message: "No se encontraron promedios de bloque lectivo para este estudiante.",
-      });
+      return res.status(404).json({ message: "No se encontraron promedios de bloque lectivo para este estudiante." });
     }
 
     res.status(200).json(averages);
   } catch (error) {
     console.error("❌ Error al obtener promedios del estudiante:", error);
-    res.status(500).json({
-      message: "Error al obtener promedios del estudiante.",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Error al obtener promedios del estudiante.", error: error.message });
   }
 };
 
-exports.getAveragesBySchedule = async (req, res) => {
+// 📘 Obtener promedios por grupo docente
+exports.getAveragesByAssignment = async (req, res) => {
   try {
-    const { scheduleId } = req.params;
+    const { assignmentId } = req.params;
 
     const averages = await TeachingBlockAvarage.findAll({
-      where: { scheduleId },
+      where: { assignmentId },
       include: [
         {
           model: TeachingBlocks,
@@ -182,13 +173,7 @@ exports.getAveragesBySchedule = async (req, res) => {
           model: StudentsEnrollments,
           as: "students",
           attributes: ["id"],
-          include: [
-            {
-              model: Persons,
-              as: "persons",
-              attributes: ["names", "lastNames"],
-            },
-          ],
+          include: [{ model: Persons, as: "persons", attributes: ["names", "lastNames"] }],
         },
       ],
       order: [
@@ -198,21 +183,17 @@ exports.getAveragesBySchedule = async (req, res) => {
     });
 
     if (!averages.length) {
-      return res.status(404).json({
-        message: "No se encontraron promedios de bloque lectivo para este horario.",
-      });
+      return res.status(404).json({ message: "No se encontraron promedios de bloque lectivo para este grupo docente." });
     }
 
     res.status(200).json(averages);
   } catch (error) {
-    console.error("❌ Error al obtener promedios por horario:", error);
-    res.status(500).json({
-      message: "Error al obtener promedios por horario.",
-      error: error.message,
-    });
+    console.error("❌ Error al obtener promedios por grupo docente:", error);
+    res.status(500).json({ message: "Error al obtener promedios por grupo docente.", error: error.message });
   }
 };
 
+// 📘 Obtener promedios por bloque lectivo
 exports.getAveragesByBlock = async (req, res) => {
   try {
     const { teachingBlockId } = req.params;
@@ -224,139 +205,81 @@ exports.getAveragesByBlock = async (req, res) => {
           model: StudentsEnrollments,
           as: "students",
           attributes: ["id"],
-          include: [
-            {
-              model: Persons,
-              as: "persons",
-              attributes: ["names", "lastNames"],
-            },
-          ],
+          include: [{ model: Persons, as: "persons", attributes: ["names", "lastNames"] }],
         },
         {
-          model: Schedules,
-          as: "schedules",
-          attributes: ["id", "weekday"],
+          model: TeacherGroups,
+          as: "teachergroups",
+          attributes: ["id"],
           include: [
-            {
-              model: Courses,
-              as: "courses",
-              attributes: ["course"],
-            },
-            {
-              model: Grades,
-              as: "grades",
-              attributes: ["grade"],
-            },
-            {
-              model: Sections,
-              as: "sections",
-              attributes: ["seccion"],
-            },
-            {
-              model: Years,
-              as: "years",
-              attributes: ['id', 'year']
-            }
+            { model: Courses, as: "courses", attributes: ["course"] },
+            { model: Grades, as: "grades", attributes: ["grade"] },
+            { model: Sections, as: "sections", attributes: ["seccion"] },
+            { model: Years, as: "years", attributes: ["year"] }
           ],
         },
       ],
-      order: [["scheduleId", "ASC"]],
+      order: [["assignmentId", "ASC"]],
     });
 
     if (!averages.length) {
-      return res.status(404).json({
-        message: "No se encontraron promedios para este bloque lectivo.",
-      });
+      return res.status(404).json({ message: "No se encontraron promedios para este bloque lectivo." });
     }
 
     res.status(200).json(averages);
   } catch (error) {
     console.error("❌ Error al obtener promedios por bloque lectivo:", error);
-    res.status(500).json({
-      message: "Error al obtener promedios por bloque lectivo.",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Error al obtener promedios por bloque lectivo.", error: error.message });
   }
 };
 
-exports.getAveragesByStudentYearSchedule = async (req, res) => {
+// 📘 Obtener promedios por estudiante, año y grupo docente
+exports.getAveragesByStudentYearAssignment = async (req, res) => {
   try {
-    const { studentId, yearId, scheduleId } = req.params;
+    const { studentId, yearId, assignmentId } = req.params;
 
-    if (!studentId || !yearId || !scheduleId) {
-      return res.status(400).json({
-        message: "Faltan parámetros: studentId, yearId o scheduleId",
-      });
+    if (!studentId || !yearId || !assignmentId) {
+      return res.status(400).json({ message: "Faltan parámetros: studentId, yearId o assignmentId" });
     }
 
     const averages = await TeachingBlockAvarage.findAll({
-      where: {
-        studentId,
-        scheduleId
-      },
+      where: { studentId, assignmentId },
       include: [
         {
           model: TeachingBlocks,
           as: "teachingblocks",
           attributes: ["id", "teachingBlock", "startDay", "endDay"],
-          where: { yearId } // 🔹 Filtra los bloques lectivos del año
+          where: { yearId },
         },
         {
-          model: Schedules,
-          as: "schedules",
-          attributes: ["id", "weekday", "startTime", "endTime"],
+          model: TeacherGroups,
+          as: "teachergroups",
           include: [
-            {
-              model: Courses,
-              as: "courses",
-              attributes: ["id", "course"],
-            },
-            {
-              model: Grades,
-              as: "grades",
-              attributes: ["id", "grade"],
-            },
-            {
-              model: Sections,
-              as: "sections",
-              attributes: ["id", "seccion"],
-            },
-            {
-              model: Years,
-              as: "years",
-              attributes: ['id', 'year']
-            }
+            { model: Courses, as: "courses", attributes: ["id", "course"] },
+            { model: Grades, as: "grades", attributes: ["id", "grade"] },
+            { model: Sections, as: "sections", attributes: ["id", "seccion"] },
+            { model: Years, as: "years", attributes: ["id", "year"] },
           ],
         },
         {
           model: StudentsEnrollments,
           as: "students",
           attributes: ["id"],
-          include: [
-            {
-              model: Persons,
-              as: "persons",
-              attributes: ["id", "names", "lastNames"],
-            },
-          ],
+          include: [{ model: Persons, as: "persons", attributes: ["id", "names", "lastNames"] }],
         },
       ],
       order: [["teachingBlockId", "ASC"]],
     });
 
-    if (!averages || averages.length === 0) {
+    if (!averages.length) {
       return res.status(404).json({
-        message: "No se encontraron promedios de bloque lectivo para este estudiante en el año y horario especificado.",
+        message: "No se encontraron promedios de bloque lectivo para este estudiante en el año y grupo docente especificado.",
       });
     }
 
     res.status(200).json(averages);
-
   } catch (error) {
     console.error("❌ Error al obtener promedios del estudiante:", error);
-    res.status(500).json({
-      message: "Error al obtener promedios del estudiante.",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Error al obtener promedios del estudiante.", error: error.message });
   }
 };

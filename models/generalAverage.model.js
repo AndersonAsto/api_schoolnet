@@ -1,30 +1,14 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db.config');
 const Years = require('./years.model');
+const TeacherGroups = require('./teacherGroups.model');
 const StudentsEnrollments = require('./studentsEnrollments.model');
-const Schedules = require('./schedules.model');
 
-const GeneralAvarage =  sequelize.define('GeneralAvarage', {
+const OverallCourseAverage =  sequelize.define('OverallCourseAverage', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true
-    },
-    studentId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: StudentsEnrollments,
-            key: 'id'
-        }
-    },
-    scheduleId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: Schedules,
-            key: 'id'
-        }
     },
     yearId: {
         type: DataTypes.INTEGER,
@@ -34,23 +18,39 @@ const GeneralAvarage =  sequelize.define('GeneralAvarage', {
             key: 'id'
         }
     },
-    block1Avarage: {
+    studentId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: StudentsEnrollments,
+            key: 'id'
+        }
+    },
+    assignmentId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: TeacherGroups,
+            key: 'id'
+        }
+    },
+    block1Average: {
         type: DataTypes.DECIMAL(5,2),
         allowNull: true
     },
-    block2Avarage: {
+    block2Average: {
         type: DataTypes.DECIMAL(5,2),
         allowNull: true
     },
-    block3Avarage: {
+    block3Average: {
         type: DataTypes.DECIMAL(5,2),
         allowNull: true
     },
-    block4Avarage: {
+    block4Average: {
         type: DataTypes.DECIMAL(5,2),
         allowNull: true
     },
-    annualAvarage: {
+    courseAverage: {
         type: DataTypes.DECIMAL(5,2),
         allowNull: true
     },
@@ -59,23 +59,23 @@ const GeneralAvarage =  sequelize.define('GeneralAvarage', {
         defaultValue: true
     }
 }, {
-    tableName: 'ganeralavarage',
+    tableName: 'overallcourseaverage',
     timestamps: true
 });
 
-GeneralAvarage.belongsTo(StudentsEnrollments, {
-    foreignKey: 'studentId',
-    as: 'students'
-});
-
-GeneralAvarage.belongsTo(Schedules, {
-    foreignKey: 'scheduleId',
-    as: 'schedules'
-});
-
-GeneralAvarage.belongsTo(Years, {
+OverallCourseAverage.belongsTo(Years, {
     foreignKey: 'yearId',
     as: 'years'
 });
 
-module.exports = GeneralAvarage;
+OverallCourseAverage.belongsTo(StudentsEnrollments, {
+    foreignKey: 'studentId',
+    as: 'students'
+});
+
+OverallCourseAverage.belongsTo(TeacherGroups, {
+    foreignKey: 'assignmentId',
+    as: 'teachergroups'
+});
+
+module.exports = OverallCourseAverage;

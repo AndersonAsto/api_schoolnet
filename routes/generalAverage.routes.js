@@ -3,6 +3,6 @@ const router = express.Router();
 const generalAvarageController = require('../controllers/generalAverage.controller');
 
 router.post('/generalAvarage/calculate', generalAvarageController.calculateAnnualAverage);
-router.get('/generalAvarage/byStudentYearAndSchedule', generalAvarageController.getGeneralAvarageByFilters);
+router.get('/generalAvarage/by-filters', generalAvarageController.getGeneralAvarageByFilters);
 
 module.exports = router;

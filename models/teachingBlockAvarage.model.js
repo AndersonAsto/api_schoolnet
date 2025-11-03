@@ -1,8 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db.config');
 const StudentsEnrollments = require('./studentsEnrollments.model');
-const Schedules = require('./schedules.model');
 const TeachingBlocks = require('./teachingBlocks.model');
+const TeacherGroups = require('./teacherGroups.model');
 
 const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
     id: {
@@ -18,11 +18,11 @@ const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
             key: 'id'
         }
     },
-    scheduleId: {
+    assignmentId:{
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: Schedules,
+            model: TeacherGroups,
             key: 'id'
         }
     },
@@ -34,7 +34,11 @@ const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
             key: 'id'
         }
     },
-    gradeAvarage: {
+    dailyAvarage: {
+        type: DataTypes.DECIMAL(5,2),
+        allowNull: false
+    },
+    practiceAvarage: {
         type: DataTypes.DECIMAL(5,2),
         allowNull: false
     },
@@ -42,7 +46,7 @@ const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
         type: DataTypes.DECIMAL(5,2),
         allowNull: false
     },
-    teachingblockavarage: {
+    teachingBlockAvarage: {
         type: DataTypes.DECIMAL(5,2),
         allowNull: false
     },
@@ -60,14 +64,14 @@ TeachingBlockAvarage.belongsTo(StudentsEnrollments, {
     as: 'students'
 });
 
-TeachingBlockAvarage.belongsTo(Schedules, {
-    foreignKey: 'scheduleId',
-    as: 'schedules'
-});
-
 TeachingBlockAvarage.belongsTo(TeachingBlocks, {
     foreignKey: 'teachingBlockId',
     as: 'teachingblocks'
+});
+
+TeachingBlockAvarage.belongsTo(TeacherGroups, {
+    foreignKey: 'assignmentId',
+    as: 'teachergroups'
 });
 
 module.exports = TeachingBlockAvarage;

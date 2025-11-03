@@ -1,8 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db.config');
-const Schedules = require('./schedules.model');
 const TeachingBlocks = require('./teachingBlocks.model');
 const StudentsEnrollments = require('./studentsEnrollments.model');
+const TeacherGroups = require('./teacherGroups.model');
 
 const Exams =  sequelize.define('Exams', {
     id: {
@@ -18,11 +18,11 @@ const Exams =  sequelize.define('Exams', {
             key: 'id'
         }
     },
-    scheduleId: {
+    assigmentId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: Schedules,
+            model: TeacherGroups,
             key: 'id'
         }
     },
@@ -38,9 +38,9 @@ const Exams =  sequelize.define('Exams', {
         type: DataTypes.DECIMAL(5,2),
         allowNull: false
     },
-    maxScore: {
-        type: DataTypes.DECIMAL(5,2),
-        allowNull: false
+    examDate: {
+        type: DataTypes.DATE,
+        allowNull: true
     },
     type: {
         type: DataTypes.ENUM('Examen', 'Práctica'),
@@ -60,9 +60,9 @@ Exams.belongsTo(StudentsEnrollments, {
     as: 'students'
 });
 
-Exams.belongsTo(Schedules, {
-    foreignKey: 'scheduleId',
-    as: 'schedules'
+Exams.belongsTo(TeacherGroups, {
+    foreignKey: 'assigmentId',
+    as: 'assignments'
 });
 
 Exams.belongsTo(TeachingBlocks, {
