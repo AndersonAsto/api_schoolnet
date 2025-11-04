@@ -6,6 +6,8 @@ const TeachingDays = require('../models/teachingDays.model');
 const Persons = require('../models/persons.model');
 const Years = require('../models/years.model');
 const Assistances = require('../models/assistances.model');
+const TeacherGroups = require('../models/teacherGroups.model');
+const { Op } = require('sequelize');
 
 // Crear calificaciones en bulk
 exports.createBulk = async (req, res) => {
@@ -201,5 +203,61 @@ exports.getByStudentAndSchedule = async (req, res) => {
   } catch (error) {
     console.error('❌ Error al obtener calificaciones por estudiante y horario:', error);
     res.status(500).json({ message: 'Error obteniendo calificaciones' });
+  }
+};
+
+exports.getQualificationsByGroupAndStudent = async (req, res) => {
+  try {
+    const { teacherGroupId, studentId } = req.params;
+
+    // 1️⃣ Buscar el grupo de docente
+    const teacherGroup = await TeacherGroups.findByPk(teacherGroupId);
+    if (!teacherGroup) {
+      return res.status(404).json({ message: 'Grupo de docente no encontrado' });
+    }
+
+    // 2️⃣ Buscar los horarios (Schedules) que coincidan con curso, grado, sección y año
+    const schedules = await Schedules.findAll({
+      where: {
+        courseId: teacherGroup.courseId,
+        gradeId: teacherGroup.gradeId,
+        sectionId: teacherGroup.sectionId,
+        yearId: teacherGroup.yearId,
+        status: true
+      }
+    });
+
+    if (!schedules || schedules.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron horarios para este grupo' });
+    }
+
+    const scheduleIds = schedules.map(s => s.id);
+
+    // 3️⃣ Buscar las calificaciones del estudiante en esos horarios
+    const qualifications = await Qualifications.findAll({
+      where: {
+        studentId: studentId,
+        scheduleId: { [Op.in]: scheduleIds },
+        status: true
+      },
+      include: [
+        {
+          model: TeachingDays,
+          as: 'schooldays',
+          attributes: ['id', 'teachingDay']
+        }
+      ],
+      order: [['createdAt', 'ASC']]
+    });
+
+    // 4️⃣ Responder con los datos
+    return res.json(qualifications);
+
+  } catch (error) {
+    console.error('Error al obtener calificaciones:', error);
+    return res.status(500).json({
+      message: 'Error al obtener calificaciones',
+      error: error.message
+    });
   }
 };

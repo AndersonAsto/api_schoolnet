@@ -5,6 +5,9 @@ const Schedules = require('../models/schedules.model');
 const TeachingDays = require('../models/teachingDays.model');
 const Years = require('../models/years.model');
 const Persons = require('../models/persons.model');
+const { Op } = require('sequelize');
+const TeacherGroups = require('../models/teacherGroups.model');
+const StudentsEnrollments = require('../models/studentsEnrollments.model');
 
 exports.createBulk = async (req, res) => {
     try {
@@ -212,5 +215,78 @@ exports.getByStudentAndSchedule = async (req, res) => {
   } catch (error) {
     console.error("❌ Error obteniendo asistencias por estudiante:", error);
     res.status(500).json({ message: "Error obteniendo asistencias", error });
+  }
+};
+
+exports.getAssistancesByGroupAndStudent = async (req, res) => {
+  try {
+    const { teacherGroupId, studentId } = req.params;
+
+    // 1️⃣ Buscar el grupo del docente
+    const teacherGroup = await TeacherGroups.findByPk(teacherGroupId);
+    if (!teacherGroup) {
+      return res.status(404).json({ message: 'Grupo de docente no encontrado' });
+    }
+
+    // 2️⃣ Buscar los horarios que coincidan con curso, grado, sección y año
+    const schedules = await Schedules.findAll({
+      where: {
+        courseId: teacherGroup.courseId,
+        gradeId: teacherGroup.gradeId,
+        sectionId: teacherGroup.sectionId,
+        yearId: teacherGroup.yearId,
+        status: true
+      }
+    });
+
+    if (!schedules || schedules.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron horarios para este grupo' });
+    }
+
+    const scheduleIds = schedules.map(s => s.id);
+
+    // 3️⃣ Buscar asistencias del estudiante en esos horarios
+    const assistances = await Assistances.findAll({
+      where: {
+        studentId: studentId,
+        scheduleId: { [Op.in]: scheduleIds },
+        status: true
+      },
+      include: [
+        {
+          model: StudentsEnrollments,
+          as: 'students',
+          attributes: ['id'],
+          include: [
+            {
+              model: Persons,
+              as: 'persons',
+              attributes: ['id', 'names', 'lastNames']
+            }
+          ]
+        },
+        {
+          model: Schedules,
+          as: 'schedules',
+          attributes: ['id', 'courseId', 'gradeId', 'sectionId', 'teacherId', 'weekday']
+        },
+        {
+          model: TeachingDays,
+          as: 'schooldays',
+          attributes: ['id', 'teachingDay']
+        }
+      ],
+      order: [['createdAt', 'ASC']]
+    });
+
+    // 4️⃣ Responder
+    return res.json(assistances);
+
+  } catch (error) {
+    console.error('Error al obtener asistencias:', error);
+    return res.status(500).json({
+      message: 'Error al obtener asistencias',
+      error: error.message
+    });
   }
 };

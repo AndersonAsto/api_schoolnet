@@ -164,3 +164,163 @@ exports.getGeneralAvarageByFilters = async (req, res) => {
     });
   }
 };
+
+exports.getGeneralAvarageBySYA = async (req, res) => {
+  try {
+    const { studentId, yearId, assignmentId } = req.query;
+
+    if (!studentId || !yearId || !assignmentId) {
+      return res.status(400).json({
+        status: false,
+        message: "Faltan parámetros requeridos: studentId, yearId o assignmentId."
+      });
+    }
+
+    const records = await OverallCourseAverage.findAll({
+      where: { studentId, yearId, assignmentId },
+      include: [
+        {
+          model: StudentsEnrollments,
+          as: 'students',
+          attributes: ['id'],
+          include: [
+            {
+              model: Persons,
+              as: 'persons',
+              attributes: ['names', 'lastNames']
+            }
+          ]
+        },
+        {
+          model: Years,
+          as: 'years',
+          attributes: ['year']
+        },
+        {
+          model: TeacherGroups,
+          as: 'teachergroups',
+          attributes: ['id', 'teacherAssignmentId', 'gradeId', 'sectionId', 'courseId'],
+          include: [
+            {
+              model: Courses,
+              as: 'courses',
+              attributes: ['course']
+            },
+            {
+              model: Grades,
+              as: 'grades',
+              attributes: ['grade']
+            },
+            {
+              model: Sections,
+              as: 'sections',
+              attributes: ['seccion']
+            }
+          ]
+        }
+      ],
+      order: [['id', 'ASC']]
+    });
+
+    if (!records.length) {
+      return res.status(404).json({
+        status: false,
+        message: "No se encontraron promedios generales para los filtros seleccionados."
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Promedios generales por cursos encontrados.",
+      data: records
+    });
+
+  } catch (error) {
+    console.error("❌ Error al obtener promedios generales:", error);
+    res.status(500).json({
+      status: false,
+      message: "Error al obtener promedios generales.",
+      error: error.message
+    });
+  }
+};
+
+exports.getGeneralAvarageByAssignment = async (req, res) => {
+  try {
+    const { yearId, assignmentId } = req.query;
+
+    if (!yearId || !assignmentId) {
+      return res.status(400).json({
+        status: false,
+        message: "Faltan parámetros requeridos: studentId, yearId o assignmentId."
+      });
+    }
+
+    const records = await OverallCourseAverage.findAll({
+      where: { yearId, assignmentId },
+      include: [
+        {
+          model: StudentsEnrollments,
+          as: 'students',
+          attributes: ['id'],
+          include: [
+            {
+              model: Persons,
+              as: 'persons',
+              attributes: ['names', 'lastNames']
+            }
+          ]
+        },
+        {
+          model: Years,
+          as: 'years',
+          attributes: ['year']
+        },
+        {
+          model: TeacherGroups,
+          as: 'teachergroups',
+          attributes: ['id', 'teacherAssignmentId', 'gradeId', 'sectionId', 'courseId'],
+          include: [
+            {
+              model: Courses,
+              as: 'courses',
+              attributes: ['course']
+            },
+            {
+              model: Grades,
+              as: 'grades',
+              attributes: ['grade']
+            },
+            {
+              model: Sections,
+              as: 'sections',
+              attributes: ['seccion']
+            }
+          ]
+        }
+      ],
+      order: [['id', 'ASC']]
+    });
+
+    if (!records.length) {
+      return res.status(404).json({
+        status: false,
+        message: "No se encontraron promedios generales para los filtros seleccionados."
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "Promedios generales por cursos encontrados.",
+      data: records
+    });
+
+  } catch (error) {
+    console.error("❌ Error al obtener promedios generales:", error);
+    res.status(500).json({
+      status: false,
+      message: "Error al obtener promedios generales.",
+      error: error.message
+    });
+  }
+};

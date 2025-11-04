@@ -4,5 +4,7 @@ const generalAvarageController = require('../controllers/generalAverage.controll
 
 router.post('/generalAvarage/calculate', generalAvarageController.calculateAnnualAverage);
 router.get('/generalAvarage/by-filters', generalAvarageController.getGeneralAvarageByFilters);
+router.get('/generalAvarage/by-SYA', generalAvarageController.getGeneralAvarageBySYA);
+router.get('/generalAvarage/by-assignment', generalAvarageController.getGeneralAvarageByAssignment);
 
 module.exports = router;

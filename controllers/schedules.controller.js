@@ -268,7 +268,7 @@ exports.getSchedulesByUserAndYear = async (req, res) => {
         "createdAt",
         "updatedAt",
       ],
-      order: [["weekday", "ASC"]],
+      order: [[{ model: Grades, as: 'grades' }, 'grade', "ASC"]],
     });
 
     res.status(200).json(schedules);
