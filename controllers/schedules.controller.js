@@ -9,7 +9,6 @@ const Users = require('../models/users.model');
 
 exports.createSchedule = async (req, res) => {
   try {
-
     const {
       yearId,
       teacherId,
@@ -295,7 +294,7 @@ exports.getSchedulesByTeacher = async (req, res) => {
     if (!person) {
       return res.status(404).json({ error: "Persona asociada no encontrada" });
     }
-    
+
     const schedules = await Schedules.findAll({
       where: { teacherId: teacherAssignment.id },
       include: [
@@ -357,7 +356,7 @@ exports.deleteScheduleById = async (req, res) => {
       return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
     }
 
-    const deleted = Schedules.destroy({ where: {id} });
+    const deleted = await Schedules.destroy({ where: { id } });
 
     if (deleted === 0) {
       return res.status(404).json({ message: 'Horario no encontrado.' });
@@ -366,6 +365,33 @@ exports.deleteScheduleById = async (req, res) => {
     res.status(200).json({ message: 'Horario eliminado correctamente.' });
   } catch (error) {
     console.error('Error al eliminar horario: ', error.message);
-    res.status(500).json({ message: 'Error al eliminar horario.'});
+    res.status(500).json({ message: 'Error al eliminar horario.' });
+  }
+}
+
+exports.updateSchedule = async (req, res) => {
+  const { id } = req.params;
+  const { yearId, teacherId, courseId, gradeId, sectionId, weekday, startTime, endTime } = req.body;
+  try {
+    const schedules = await Schedules.findByPk(id);
+
+    if (!schedules) {
+      return res.status(404).json({ message: 'Horario no encontrado.' });
+    }
+
+    schedules.yearId = yearId;
+    schedules.teacherId = teacherId;
+    schedules.courseId = courseId;
+    schedules.gradeId = gradeId;
+    schedules.sectionId = sectionId;
+    schedules.weekday = weekday;
+    schedules.startTime = startTime;
+    schedules.endTime = endTime;
+
+    await schedules.save();
+    res.status(200).json(schedules);
+  } catch (error) {
+    console.error('Error al actualizar horario: ', error.message);
+    res.status(500).json({ message: 'Error al actualizar horario.' });
   }
 }

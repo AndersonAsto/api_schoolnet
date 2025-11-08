@@ -8,5 +8,6 @@ router.get('/exams/student/:studentId/group/:assigmentId', examsController.getEx
 router.get('/exams/block/:teachingBlockId/group/:assigmentId', examsController.getExamsByBlockAndGroup);
 router.post('/exams/create', examsController.createExam);
 router.delete('/exams/delete/:id', examsController.deleteExamsById);
+router.put('/exams/update/:id', examsController.updateEvaluation);
 
 module.exports = router;

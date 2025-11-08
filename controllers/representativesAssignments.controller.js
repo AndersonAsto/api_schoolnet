@@ -72,15 +72,38 @@ exports.deleteParentsById = async (req, res) => {
             return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
         }
 
-        const deleted = RepresentativesAssignments.destroy({ where: {id} });
+        const deleted = await RepresentativesAssignments.destroy({ where: {id} });
 
         if (deleted === 0) {
-            return res.status().json({ message: 'Apoderado no encontrado.' });
+            return res.status(404).json({ message: 'Apoderado no encontrado.' });
         }
 
         res.status(200).json({ message: 'Apoderado eliminado correctamente.' });
     } catch (error) {
-        console.error('Error al eliminar Apoderado: ', error.message);
+        console.error('Error al eliminar apoderado: ', error.message);
         res.status(500).json({ message: 'Error al eliminar apoderado.'});
+    }
+}
+
+exports.updateParent = async (req, res) => {
+    const { id } = req.params;
+    const { yearId, personId, studentId, relationshipType } = req.body;
+    try {
+        const parents = await RepresentativesAssignments.findByPk(id);
+
+        if(!parents) {
+            return res.status(404).json({ message: 'Apoderado no encontrado.' });
+        }
+
+        parents.yearId = yearId;
+        parents.personId = personId;
+        parents.studentId = studentId;
+        parents.relationshipType = relationshipType;
+
+        await parents.save();
+        res.status(200).json(parents);
+    } catch (error) {
+        console.error('Error al actualizar apoderado: ', error.message);
+        res.status(500).json({ message: 'Error al actualizar apoderado.' });
     }
 }

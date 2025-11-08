@@ -187,7 +187,7 @@ exports.deleteStudentById = async (req, res) => {
       return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
     }
 
-    const deleted = StudentEnrollments.destroy({ where: {id} });
+    const deleted = await StudentEnrollments.destroy({ where: {id} });
 
     if (deleted === 0) {
       return res.status(404).json({ message: 'Estudiante no encontrado.' });
@@ -197,5 +197,28 @@ exports.deleteStudentById = async (req, res) => {
   } catch (error) {
     console.error('Error al eliminar estudiante: ', error.message);
     res.status(500).json({ message: 'Error al eliminar estudiante.'});
+  }
+}
+
+exports.updatedStudent = async (req, res) => {
+  const { id } = req.params;
+  const { studentId, yearId, gradeId, sectionId } = req.body;
+  try {
+    const students = await StudentEnrollments.findByPk(id);
+
+    if (!students) {
+      return res.status(404).json({ message: 'Estudiante no encontrado.' });
+    }
+
+    students.studentId = studentId;
+    students.yearId = yearId;
+    students.gradeId = gradeId;
+    students.sectionId = sectionId;
+
+    await students.save();
+    res.status(200).json(students);
+  } catch (error) {
+    console.error('Error al actualizar estudiante: ', error.message);
+    res.status(500).json({ message: 'Error al actualizar estudiante.' });
   }
 }

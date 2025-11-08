@@ -37,6 +37,10 @@ const Incidents = sequelize.define('Incidents', {
     incidentDetail: {
         type: DataTypes.TEXT,
         allowNull: true
+    },
+    status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
     }
 }, {
     tableName: 'incidents',

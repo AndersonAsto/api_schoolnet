@@ -6,5 +6,6 @@ router.post('/incidents/create', incidentsController.createIncident);
 router.get('/incidents/list', incidentsController.getAllIncidents);
 router.get('/incidents/byStudentAndSchedule/:studentId/:scheduleId', incidentsController.getByStudentAndSchedule);
 router.delete('/incidents/delete/:id', incidentsController.deleteIncidentById);
+router.put('/incidents/update/:id', incidentsController.updateIncident);
 
 module.exports = router;

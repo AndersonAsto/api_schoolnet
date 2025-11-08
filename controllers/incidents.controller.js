@@ -163,7 +163,7 @@ exports.deleteIncidentById = async (req, res) => {
       return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
     }
 
-    const deleted = Incidents.destroy({ where: {id} });
+    const deleted = await Incidents.destroy({ where: {id} });
 
     if (deleted === 0) {
       return res.status(404).json({ message: 'Incidencia no encontrada.' });
@@ -173,5 +173,28 @@ exports.deleteIncidentById = async (req, res) => {
   } catch (error) {
     console.error('Error al eliminar incidencia: ', error.message);
     res.status(500).json({ message: 'Error al eliminar incidencia.'});
+  }
+}
+
+exports.updateIncident = async (req, res) => {
+  const { id } = req.params;
+  const { studentId, scheduleId, schoolDayId, incidentDetail } = req.body;
+  try {
+    const incidents = await Incidents.findByPk(id);
+
+    if (!incidents) {
+      return res.status(404).json({ message: 'Incidente no encontrado.' });
+    }
+
+    incidents.studentId = studentId;
+    incidents.scheduleId = scheduleId;
+    incidents.schoolDayId = schoolDayId;
+    incidents.incidentDetail = incidentDetail;
+
+    await incidents.save(),
+    res.status(200).json(incidents);
+  } catch (error) {
+    console.error('Error al actualizar incidente: ', error.message);
+    res.status(500).json({ message: 'Error al actualizar incidente.' });
   }
 }

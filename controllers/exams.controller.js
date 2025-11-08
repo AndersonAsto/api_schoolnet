@@ -273,7 +273,7 @@ exports.deleteExamsById = async (req, res) => {
       return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
     }
 
-    const deleted = Exams.destroy({ where: {id} });
+    const deleted = await Exams.destroy({ where: { id } });
 
     if (deleted === 0) {
       return res.status(404).json({ message: 'Evaluación no encontrada.' });
@@ -282,6 +282,31 @@ exports.deleteExamsById = async (req, res) => {
     res.status(200).json({ message: 'Evaluación eliminada correctamente.' });
   } catch (error) {
     console.error('Error al eliminar evaluación: ', error.message);
-    res.status(500).json({ message: 'Error al eliminar evalución.'});
+    res.status(500).json({ message: 'Error al eliminar evalución.' });
+  }
+}
+
+exports.updateEvaluation = async (req, res) => {
+  const { id } = req.params;
+  const { studentId, assigmentId, teachingBlockId, score, examDate, type } = req.body;
+  try {
+    const evaluations = await Exams.findByPk(id);
+
+    if (!evaluations) {
+      return res.status(404).json({ message: 'Evaluación no encontrada.' });
+    }
+
+    evaluations.studentId = studentId;
+    evaluations.assigmentId = assigmentId;
+    evaluations.teachingBlockId = teachingBlockId;
+    evaluations.score = score;
+    evaluations.examDate = examDate;
+    evaluations.type = type;
+
+    await evaluations.save();
+    res.status(200).json(evaluations);
+  } catch (error) {
+    console.error('Error al actualizar evaluación: ', error.message);
+    res.status(500).json({ message: 'Error al actualizar evaluación.' });
   }
 }

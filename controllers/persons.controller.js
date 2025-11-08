@@ -102,7 +102,6 @@ exports.updatePerson = async (req, res) => {
         await persons.save();
 
         res.status(200).json(persons);
-
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Error al actualizar persona', error });
