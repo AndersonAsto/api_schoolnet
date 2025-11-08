@@ -4,6 +4,7 @@ const Controller = require("../controllers/teachingBlockAverage.controller");
 
 // 📘 Calcular y guardar promedio de bloques lectivos
 router.post("/teachingblockaverage/calculate", Controller.calculateAndSaveAverage);
+router.post("/teachingblockaverage/preview", Controller.previewAverage);
 
 // 📘 Obtener promedios por estudiante
 router.get("/teachingblockaverage/byStudent/:studentId", Controller.getAveragesByStudent);

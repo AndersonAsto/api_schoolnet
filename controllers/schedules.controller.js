@@ -348,3 +348,24 @@ exports.getSchedulesByTeacher = async (req, res) => {
     })
   }
 }
+
+exports.deleteScheduleById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+    }
+
+    const deleted = Schedules.destroy({ where: {id} });
+
+    if (deleted === 0) {
+      return res.status(404).json({ message: 'Horario no encontrado.' });
+    }
+
+    res.status(200).json({ message: 'Horario eliminado correctamente.' });
+  } catch (error) {
+    console.error('Error al eliminar horario: ', error.message);
+    res.status(500).json({ message: 'Error al eliminar horario.'});
+  }
+}

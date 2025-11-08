@@ -12,7 +12,7 @@ const Years = require("../models/years.model");
 const Qualifications = require("../models/qualifications.model");
 const TeacherGroups = require("../models/teacherGroups.model");
 
-exports.calculateAndSaveAverage = async (req, res) => {
+exports.previewAverage = async (req, res) => {
   try {
     const { studentId, assignmentId, teachingBlockId } = req.body;
 
@@ -20,7 +20,6 @@ exports.calculateAndSaveAverage = async (req, res) => {
       return res.status(400).json({ message: 'Faltan parámetros obligatorios (studentId, assignmentId, teachingBlockId)' });
     }
 
-    // 1️⃣ Obtener info del grupo docente (para cruzar grado, sección, curso)
     const group = await TeacherGroups.findByPk(assignmentId);
     if (!group) {
       return res.status(404).json({ message: 'TeacherGroup no encontrado' });
@@ -28,86 +27,133 @@ exports.calculateAndSaveAverage = async (req, res) => {
 
     const { gradeId, sectionId, courseId } = group;
 
-    // 2️⃣ Buscar calificaciones diarias en Qualifications a través de Schedules
+    // Calcular como antes
     const qualifications = await Qualifications.findAll({
       include: [
         {
           model: Schedules,
           as: 'schedules',
-          where: {
-            gradeId,
-            sectionId,
-            courseId
-          },
-          attributes: []
-        }
+          where: { gradeId, sectionId, courseId },
+          attributes: [],
+        },
       ],
-      where: {
-        studentId,
-        teachingBlockId,
-        status: true
-      },
-      attributes: ['rating']
+      where: { studentId, teachingBlockId, status: true },
+      attributes: ['rating'],
     });
 
     const dailyAvarage = qualifications.length
       ? qualifications.reduce((sum, q) => sum + parseFloat(q.rating || 0), 0) / qualifications.length
       : 0;
 
-    // 3️⃣ Buscar prácticas
     const practices = await Exams.findAll({
-      where: {
-        studentId,
-        assigmentId: assignmentId,
-        teachingBlockId,
-        type: 'Práctica',
-        status: true
-      },
-      attributes: ['score']
+      where: { studentId, assigmentId: assignmentId, teachingBlockId, type: 'Práctica', status: true },
+      attributes: ['score'],
     });
 
     const practiceAvarage = practices.length
       ? practices.reduce((sum, e) => sum + parseFloat(e.score || 0), 0) / practices.length
       : 0;
 
-    // 4️⃣ Buscar exámenes
     const exams = await Exams.findAll({
-      where: {
-        studentId,
-        assigmentId: assignmentId,
-        teachingBlockId,
-        type: 'Examen',
-        status: true
-      },
-      attributes: ['score']
+      where: { studentId, assigmentId: assignmentId, teachingBlockId, type: 'Examen', status: true },
+      attributes: ['score'],
     });
 
     const examAvarage = exams.length
       ? exams.reduce((sum, e) => sum + parseFloat(e.score || 0), 0) / exams.length
       : 0;
 
-    // 5️⃣ Promedio ponderado
     const teachingBlockAvarage = (dailyAvarage * 0.3 + practiceAvarage * 0.3 + examAvarage * 0.4).toFixed(2);
 
-    // 6️⃣ Guardar o actualizar TeachingBlockAvarage
-    await TeachingBlockAvarage.upsert({
-      studentId,
-      assignmentId,
-      teachingBlockId,
-      dailyAvarage,
-      practiceAvarage,
-      examAvarage,
-      teachingBlockAvarage,
-      status: true,
-      updatedAt: new Date()
-    });
-
+    // ✅ Solo devolver, sin guardar
     return res.status(200).json({
-      message: '✅ Promedio calculado correctamente',
-      data: { dailyAvarage, practiceAvarage, examAvarage, teachingBlockAvarage }
+      message: '✅ Vista previa generada correctamente',
+      data: { dailyAvarage, practiceAvarage, examAvarage, teachingBlockAvarage },
     });
   } catch (error) {
-    console.error('❌ Error al calcular promedio:', error);
+    console.error('❌ Error al calcular promedio (preview):', error);
+    return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+};
+
+exports.calculateAndSaveAverage = async (req, res) => {
+  try {
+    const { studentId, assignmentId, teachingBlockId } = req.body;
+
+    if (!studentId || !assignmentId || !teachingBlockId) {
+      return res.status(400).json({ message: 'Faltan parámetros obligatorios' });
+    }
+
+    const group = await TeacherGroups.findByPk(assignmentId);
+    if (!group) {
+      return res.status(404).json({ message: 'TeacherGroup no encontrado' });
+    }
+
+    const { gradeId, sectionId, courseId } = group;
+
+    const qualifications = await Qualifications.findAll({
+      include: [{ model: Schedules, as: 'schedules', where: { gradeId, sectionId, courseId }, attributes: [] }],
+      where: { studentId, teachingBlockId, status: true },
+      attributes: ['rating'],
+    });
+
+    const dailyAvarage = qualifications.length
+      ? qualifications.reduce((sum, q) => sum + parseFloat(q.rating || 0), 0) / qualifications.length
+      : 0;
+
+    const practices = await Exams.findAll({
+      where: { studentId, assigmentId: assignmentId, teachingBlockId, type: 'Práctica', status: true },
+      attributes: ['score'],
+    });
+
+    const practiceAvarage = practices.length
+      ? practices.reduce((sum, e) => sum + parseFloat(e.score || 0), 0) / practices.length
+      : 0;
+
+    const exams = await Exams.findAll({
+      where: { studentId, assigmentId: assignmentId, teachingBlockId, type: 'Examen', status: true },
+      attributes: ['score'],
+    });
+
+    const examAvarage = exams.length
+      ? exams.reduce((sum, e) => sum + parseFloat(e.score || 0), 0) / exams.length
+      : 0;
+
+    const teachingBlockAvarage = (dailyAvarage * 0.3 + practiceAvarage * 0.3 + examAvarage * 0.4).toFixed(2);
+
+    // ✅ Buscar si ya existe registro
+    const existing = await TeachingBlockAvarage.findOne({
+      where: { studentId, assignmentId, teachingBlockId },
+    });
+
+    if (existing) {
+      await existing.update({
+        dailyAvarage,
+        practiceAvarage,
+        examAvarage,
+        teachingBlockAvarage,
+        updatedAt: new Date(),
+      });
+    } else {
+      await TeachingBlockAvarage.create({
+        studentId,
+        assignmentId,
+        teachingBlockId,
+        dailyAvarage,
+        practiceAvarage,
+        examAvarage,
+        teachingBlockAvarage,
+        status: true,
+        createdAt: new Date(),
+      });
+    }
+
+    return res.status(200).json({
+      message: existing ? '✅ Promedio actualizado correctamente' : '✅ Promedio creado correctamente',
+      data: { dailyAvarage, practiceAvarage, examAvarage, teachingBlockAvarage },
+    });
+  } catch (error) {
+    console.error('❌ Error al guardar promedio:', error);
     return res.status(500).json({ message: 'Error interno del servidor', error: error.message });
   }
 };

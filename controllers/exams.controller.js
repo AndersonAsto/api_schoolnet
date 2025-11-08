@@ -198,3 +198,90 @@ exports.getExamsByStudentAndGroup = async (req, res) => {
   }
 };
 
+exports.getExamsByBlockAndGroup = async (req, res) => {
+  try {
+    const { teachingBlockId, assigmentId } = req.params;
+
+    // Validación de parámetros obligatorios
+    if (!teachingBlockId) {
+      return res.status(400).json({ message: 'El parámetro teachingBlockId es obligatorio.' });
+    }
+
+    // Construimos la cláusula where dinámica
+    const whereClause = { teachingBlockId };
+
+    if (assigmentId) {
+      whereClause.assigmentId = assigmentId; // usamos el nombre real de la FK en tu modelo
+    }
+
+    // 🔍 Consulta principal con includes
+    const exams = await Exams.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: StudentsEnrollments,
+          as: 'students',
+          include: [
+            {
+              model: Persons,
+              as: 'persons',
+              attributes: ['id', 'names', 'lastNames'],
+            },
+          ],
+        },
+        {
+          model: TeacherGroups,
+          as: 'assignments',
+          attributes: ['id', 'courseId', 'sectionId', 'gradeId', 'teacherAssignmentId'],
+        },
+        {
+          model: TeachingBlocks,
+          as: 'teachingblocks',
+          attributes: ['id', 'teachingBlock', 'startDay', 'endDay'],
+        },
+      ],
+      order: [['teachingBlockId', 'ASC']],
+    });
+
+    // Si no se encontraron exámenes
+    if (!exams || exams.length === 0) {
+      return res.status(200).json({
+        message: assigmentId
+          ? 'El alumno no tiene exámenes registrados en este grupo docente.'
+          : 'El alumno no tiene exámenes registrados.',
+        exams: [],
+      });
+    }
+    res.status(200).json({
+      message: 'Exámenes obtenidos correctamente.',
+      exams,
+    });
+  } catch (error) {
+    console.error('❌ Error al obtener exámenes por alumno y grupo docente:', error);
+    res.status(500).json({
+      message: 'Error al obtener los exámenes por alumno y grupo docente.',
+      error: error.message,
+    });
+  }
+};
+
+exports.deleteExamsById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+    }
+
+    const deleted = Exams.destroy({ where: {id} });
+
+    if (deleted === 0) {
+      return res.status(404).json({ message: 'Evaluación no encontrada.' });
+    }
+
+    res.status(200).json({ message: 'Evaluación eliminada correctamente.' });
+  } catch (error) {
+    console.error('Error al eliminar evaluación: ', error.message);
+    res.status(500).json({ message: 'Error al eliminar evalución.'});
+  }
+}

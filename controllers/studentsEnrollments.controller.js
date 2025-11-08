@@ -7,62 +7,62 @@ const Schedules = require('../models/schedules.model');
 const TeacherGroups = require('../models/teacherGroups.model');
 
 exports.createStudentEnrollment = async (req, res) => {
-    try {
-        
-        const { studentId, yearId, gradeId, sectionId } = req.body;
+  try {
 
-        if ( !studentId || !yearId || !gradeId || !sectionId )
-            return res.status(400).json({ error: 'No ha completado algunos campos' });
+    const { studentId, yearId, gradeId, sectionId } = req.body;
 
-        const newStudentEnrollment = await StudentEnrollments.create({
-            studentId, yearId, gradeId, sectionId
-        })
-        res.status(201).json(newStudentEnrollment);
+    if (!studentId || !yearId || !gradeId || !sectionId)
+      return res.status(400).json({ error: 'No ha completado algunos campos' });
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al crear inscipción de estudiante: ', error
-        });
-    }
+    const newStudentEnrollment = await StudentEnrollments.create({
+      studentId, yearId, gradeId, sectionId
+    })
+    res.status(201).json(newStudentEnrollment);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: 'Error al crear inscipción de estudiante: ', error
+    });
+  }
 }
 
 exports.getStudentEnrollments = async (req, res) => {
-    try {
-        
-        const studentEnrollments = await StudentEnrollments.findAll({
-            include: [
-                {
-                    model: Persons,
-                    as: 'persons',
-                    attributes: ['id', 'names', 'lastNames', 'role']
-                },
-                {
-                    model: Years,
-                    as: 'years',
-                    attributes: ['id', 'year']
-                },
-                {
-                    model: Sections,
-                    as: 'sections',
-                    attributes: ['id', 'seccion']
-                },
-                {
-                    model: Grades,
-                    as: 'grades',
-                    attributes: ['id', 'grade']
-                }
-            ],
-            attributes: ['id', 'status', 'createdAt', 'updatedAt']
-        });
-        res.json(studentEnrollments);
+  try {
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al obtener incripciones de estudiantes', error
-        });
-    }
+    const studentEnrollments = await StudentEnrollments.findAll({
+      include: [
+        {
+          model: Persons,
+          as: 'persons',
+          attributes: ['id', 'names', 'lastNames', 'role']
+        },
+        {
+          model: Years,
+          as: 'years',
+          attributes: ['id', 'year']
+        },
+        {
+          model: Sections,
+          as: 'sections',
+          attributes: ['id', 'seccion']
+        },
+        {
+          model: Grades,
+          as: 'grades',
+          attributes: ['id', 'grade']
+        }
+      ],
+      attributes: ['id', 'status', 'createdAt', 'updatedAt']
+    });
+    res.json(studentEnrollments);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: 'Error al obtener incripciones de estudiantes', error
+    });
+  }
 }
 
 exports.getStudentsBySchedule = async (req, res) => {
@@ -178,3 +178,24 @@ exports.getStudentsByGroup = async (req, res) => {
     });
   }
 };
+
+exports.deleteStudentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+    }
+
+    const deleted = StudentEnrollments.destroy({ where: {id} });
+
+    if (deleted === 0) {
+      return res.status(404).json({ message: 'Estudiante no encontrado.' });
+    }
+
+    res.status(200).json({ message: 'Estudiante eliminado correctamente.' });
+  } catch (error) {
+    console.error('Error al eliminar estudiante: ', error.message);
+    res.status(500).json({ message: 'Error al eliminar estudiante.'});
+  }
+}

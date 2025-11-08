@@ -50,3 +50,24 @@ exports.getTeacherAssignaments = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener asignaciones de docentes', error });
     }
 }
+
+exports.deleteTeacherById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+        }
+
+        const deleted = await TeacherAssignments.destroy({ where: {id} });
+
+        if (deleted === 0) {
+            return res.status(404).json({ message: 'Docente no encontrado.' });
+        }
+
+        res.status(200).json({ message: 'Docente eliminado correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar docente: ', error.message);
+        res.status(500).json({ message: 'Error al eliminar docente.'});
+    }
+}

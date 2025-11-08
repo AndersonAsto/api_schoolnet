@@ -7,7 +7,7 @@ logs
 *.log
 debug.log
 Thumbs.db
-
+.scannerwork/
 # Ignorando carpetas
 node_modules/
 .idea/

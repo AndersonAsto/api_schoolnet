@@ -96,5 +96,3 @@ exports.getSchoolDaysByYear = async (req, res) => {
         res.status(500).json({ message: 'Error interno al obtener dias lectivos', error });
     }
 };
-
-

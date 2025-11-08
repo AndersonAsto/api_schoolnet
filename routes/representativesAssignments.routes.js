@@ -4,5 +4,6 @@ const representativeAssignments = require('../controllers/representativesAssignm
 
 router.post('/representativeAssignments/create', representativeAssignments.createRepresentativesAssignments);
 router.get('/representativeAssignments/list', representativeAssignments.getRepresentativesAssignments);
+router.delete('/representativeAssignments/delete/:id', representativeAssignments.deleteParentsById);
 
 module.exports = router;

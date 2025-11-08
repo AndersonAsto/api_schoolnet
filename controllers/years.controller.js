@@ -12,7 +12,7 @@ exports.createYear = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error al crear year', error });
+        res.status(500).json({ message: 'Error al crear year' });
     }
 }
 

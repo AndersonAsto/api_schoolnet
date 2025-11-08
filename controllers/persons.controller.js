@@ -3,25 +3,25 @@ const Persons = require('../models/persons.model');
 exports.createPerson = async (req, res) => {
     try {
 
-        const { 
-            names, 
-            lastNames, 
-            dni, 
-            email, 
-            phone, 
-            role 
+        const {
+            names,
+            lastNames,
+            dni,
+            email,
+            phone,
+            role
         } = req.body;
 
         if (!names || !lastNames || !dni || !email || !phone || !role)
             return res.status(400).json({ error: 'No ha completado todos los campos' });
 
-        const newPerson = await Persons.create({ 
-            names, 
-            lastNames, 
-            dni, 
-            email, 
-            phone, 
-            role 
+        const newPerson = await Persons.create({
+            names,
+            lastNames,
+            dni,
+            email,
+            phone,
+            role
         });
         res.status(201).json(newPerson);
 
@@ -33,7 +33,7 @@ exports.createPerson = async (req, res) => {
 
 exports.getPersons = async (req, res) => {
     try {
-        
+
         const persons = await Persons.findAll();
         res.json(persons);
 
@@ -46,12 +46,12 @@ exports.getPersons = async (req, res) => {
 exports.getPersonsByPrivilegien = async (req, res) => {
     try {
 
-        const validRoles = ['Administrador','Docente','Apoderado'];
+        const validRoles = ['Administrador', 'Docente', 'Apoderado'];
 
         const persons = await Persons.findAll({
-            where: { 
+            where: {
                 role: validRoles
-             },
+            },
         });
         res.json(persons);
     } catch (error) {
@@ -65,7 +65,7 @@ exports.getPersonsByRole = async (req, res) => {
 
         const { role } = req.params;
 
-        const validRoles = ['Administrador','Docente','Estudiante','Apoderado'];
+        const validRoles = ['Administrador', 'Docente', 'Estudiante', 'Apoderado'];
         if (!validRoles.includes(role)) {
             return res.status(400).json({ message: 'Rol inválido' });
         }
@@ -88,7 +88,7 @@ exports.updatePerson = async (req, res) => {
     try {
         const persons = await Persons.findByPk(id);
 
-        if(!persons) {
+        if (!persons) {
             return res.status(404).json({ message: 'Persona no encontrada' });
         }
 
@@ -98,7 +98,7 @@ exports.updatePerson = async (req, res) => {
         persons.email = email;
         persons.phone = phone;
         persons.role = role;
-    
+
         await persons.save();
 
         res.status(200).json(persons);
@@ -110,34 +110,34 @@ exports.updatePerson = async (req, res) => {
 }
 
 exports.deletePersonById = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    if (!id || isNaN(id)) {
-      return res.status(400).json({ message: 'ID inválido o no proporcionado' });
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ message: 'ID inválido o no proporcionado' });
+        }
+
+        const deleted = await Persons.destroy({ where: { id } });
+
+        if (deleted === 0) {
+            return res.status(404).json({ message: 'Persona no encontrada' });
+        }
+
+        res.status(200).json({ message: 'Persona eliminada correctamente' });
+
+    } catch (error) {
+        console.error('❌ Error al eliminar persona:', error.message);
+
+        if (error.name === 'SequelizeForeignKeyConstraintError' ||
+            error.parent?.code === 'ER_ROW_IS_REFERENCED_2') {
+            return res.status(409).json({
+                message: 'No se puede eliminar la persona porque está asociada a otros registros (conflicto de integridad).'
+            });
+        }
+
+        res.status(500).json({
+            message: 'Error al eliminar persona',
+            error: error.message
+        });
     }
-
-    const deleted = await Persons.destroy({ where: { id } });
-
-    if (deleted === 0) {
-      return res.status(404).json({ message: 'Persona no encontrada' });
-    }
-
-    res.status(200).json({ message: 'Persona eliminada correctamente' });
-
-  } catch (error) {
-    console.error('❌ Error al eliminar persona:', error.message);
-
-    if (error.name === 'SequelizeForeignKeyConstraintError' ||
-        error.parent?.code === 'ER_ROW_IS_REFERENCED_2') {
-      return res.status(409).json({
-        message: 'No se puede eliminar la persona porque está asociada a otros registros (conflicto de integridad).'
-      });
-    }
-
-    res.status(500).json({
-      message: 'Error al eliminar persona',
-      error: error.message
-    });
-  }
 };

@@ -63,3 +63,24 @@ exports.getRepresentativesAssignments = async (req, res) => {
         })
     }
 }
+
+exports.deleteParentsById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+        }
+
+        const deleted = RepresentativesAssignments.destroy({ where: {id} });
+
+        if (deleted === 0) {
+            return res.status().json({ message: 'Apoderado no encontrado.' });
+        }
+
+        res.status(200).json({ message: 'Apoderado eliminado correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar Apoderado: ', error.message);
+        res.status(500).json({ message: 'Error al eliminar apoderado.'});
+    }
+}

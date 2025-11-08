@@ -6,5 +6,6 @@ router.post('/studentEnrollments/create', studentEnrollmentsController.createStu
 router.get('/studentEnrollments/list', studentEnrollmentsController.getStudentEnrollments);
 router.get("/studentEnrollments/bySchedule/:scheduleId", studentEnrollmentsController.getStudentsBySchedule);
 router.get("/studentEnrollments/by-group/:asigmentId", studentEnrollmentsController.getStudentsByGroup);
+router.delete('/studentEnrollments/delete/:id', studentEnrollmentsController.deleteStudentById);
 
 module.exports = router;
