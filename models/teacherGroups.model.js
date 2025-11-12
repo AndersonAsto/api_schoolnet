@@ -1,6 +1,6 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
-const TeacherAssignments = require('./teachersAssignments.model');
+const TeacherAssignments = require('./teacherAssignments.model');
 const Years = require('./years.model');
 const Grades = require('./grades.model');
 const Sections = require('./sections.model');
@@ -53,7 +53,7 @@ const TeacherGroups = sequelize.define('TeacherGroups', {
             key: 'id'
         }
     }
-},{
+}, {
     tableName: 'teachergroups',
     timestamps: true
 });

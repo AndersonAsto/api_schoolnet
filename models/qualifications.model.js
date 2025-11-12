@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
-const StudentsEnrollments = require('../models/studentsEnrollments.model');
+const StudentsEnrollments = require('./studentEnrollments.model');
 const Schedules = require('../models/schedules.model');
-const TeachingDays = require('../models/teachingDays.model');
+const TeachingDays = require('./schoolDays.model');
 const TeachingBlocks = require('./teachingBlocks.model');
 
 const Qualifications = sequelize.define('Qualifications', {
@@ -44,7 +44,7 @@ const Qualifications = sequelize.define('Qualifications', {
         }
     },
     rating: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true
     },
     ratingDetail: {

@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
-const StudentsEnrollments = require('./studentsEnrollments.model');
+const StudentsEnrollments = require('./studentEnrollments.model');
 const Schedules = require('./schedules.model');
-const SchoolDays = require('./teachingDays.model');
+const SchoolDays = require('./schoolDays.model');
 
 const Incidents = sequelize.define('Incidents', {
     id: {

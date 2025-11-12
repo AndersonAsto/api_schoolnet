@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const teachersAssignmentsController = require('../controllers/teachersAssignments.controller');
+const teachersAssignmentsController = require('../controllers/teacherAssignments.controller');
 
 router.post('/teachersAssignments/create', teachersAssignmentsController.createTeacherAssignament);
 router.get('/teachersAssignments/list', teachersAssignmentsController.getTeacherAssignaments);

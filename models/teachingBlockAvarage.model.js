@@ -1,6 +1,6 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
-const StudentsEnrollments = require('./studentsEnrollments.model');
+const StudentsEnrollments = require('./studentEnrollments.model');
 const TeachingBlocks = require('./teachingBlocks.model');
 const TeacherGroups = require('./teacherGroups.model');
 
@@ -18,7 +18,7 @@ const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
             key: 'id'
         }
     },
-    assignmentId:{
+    assignmentId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
@@ -35,19 +35,19 @@ const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
         }
     },
     dailyAvarage: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: false
     },
     practiceAvarage: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: false
     },
     examAvarage: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: false
     },
     teachingBlockAvarage: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: false
     },
     status: {

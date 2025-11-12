@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
 
 const Grades = sequelize.define('Grades', {
@@ -17,7 +17,7 @@ const Grades = sequelize.define('Grades', {
     }
 }, {
     timestamps: true,
-    tableName:'grades'
+    tableName: 'grades'
 });
 
 module.exports = Grades;

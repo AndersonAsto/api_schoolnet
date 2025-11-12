@@ -1,4 +1,4 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
 
 const Persons = sequelize.define('Persons', {
@@ -28,7 +28,7 @@ const Persons = sequelize.define('Persons', {
         allowNull: false
     },
     role: {
-        type: DataTypes.ENUM('Administrador','Docente','Estudiante','Apoderado'),
+        type: DataTypes.ENUM('Administrador', 'Docente', 'Estudiante', 'Apoderado'),
         allowNull: false
     },
     status: {

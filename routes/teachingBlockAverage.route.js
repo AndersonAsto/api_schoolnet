@@ -17,8 +17,8 @@ router.get("/teachingblockaverage/byTeachingBlock/:teachingBlockId", Controller.
 
 // 📘 Obtener promedios por estudiante, año y grupo docente
 router.get(
-  "/teachingblockaverage/byStudent/:studentId/year/:yearId/assignment/:assignmentId",
-  Controller.getAveragesByStudentYearAssignment
+    "/teachingblockaverage/byStudent/:studentId/year/:yearId/assignment/:assignmentId",
+    Controller.getAveragesByStudentYearAssignment
 );
 
 module.exports = router;

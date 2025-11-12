@@ -1,10 +1,10 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
 const Years = require('./years.model');
 const TeacherGroups = require('./teacherGroups.model');
-const StudentsEnrollments = require('./studentsEnrollments.model');
+const StudentsEnrollments = require('./studentEnrollments.model');
 
-const OverallCourseAverage =  sequelize.define('OverallCourseAverage', {
+const OverallCourseAverage = sequelize.define('OverallCourseAverage', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -35,23 +35,23 @@ const OverallCourseAverage =  sequelize.define('OverallCourseAverage', {
         }
     },
     block1Average: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true
     },
     block2Average: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true
     },
     block3Average: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true
     },
     block4Average: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true
     },
     courseAverage: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: true
     },
     status: {

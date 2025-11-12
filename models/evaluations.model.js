@@ -1,10 +1,10 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
 const TeachingBlocks = require('./teachingBlocks.model');
-const StudentsEnrollments = require('./studentsEnrollments.model');
+const StudentsEnrollments = require('./studentEnrollments.model');
 const TeacherGroups = require('./teacherGroups.model');
 
-const Exams =  sequelize.define('Exams', {
+const Exams = sequelize.define('Exams', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -35,7 +35,7 @@ const Exams =  sequelize.define('Exams', {
         }
     },
     score: {
-        type: DataTypes.DECIMAL(5,2),
+        type: DataTypes.DECIMAL(5, 2),
         allowNull: false
     },
     examDate: {

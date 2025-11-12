@@ -1,4 +1,4 @@
-require('dotenv').config({ quiet: true });
+require('dotenv').config({quiet: true});
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
@@ -14,22 +14,22 @@ const PORT = process.env.PORT || 3000;
 const yearsRoutes = require('./routes/years.route');
 const teachingBlocksRoutes = require('./routes/teachingBlocks.route');
 const holidaysRoutes = require('./routes/holidays.routes');
-const teachingDaysRoutes = require('./routes/teachingDays.routes');
+const teachingDaysRoutes = require('./routes/schoolDays.routes');
 const coursesRoutes = require('./routes/courses.routes');
 const gradesRoutes = require('./routes/grades.routes');
 const sectionsRoutes = require('./routes/sections.routes');
 const personsRoutes = require('./routes/persons.routes');
 const usersRoutes = require('./routes/users.routes');
-const teachersAssignmentsRoutes = require('./routes/teachersAssignments.routes');
+const teachersAssignmentsRoutes = require('./routes/teacherAssignments.routes');
 const studentEnrollmentsRoutes = require('./routes/studentEnrollments.routes');
-const representativeAssignments = require('./routes/representativesAssignments.routes');
+const representativeAssignments = require('./routes/parentAssignments.routes');
 const schedulesRoutes = require('./routes/schedules.routes');
 const assistanceRoutes = require('./routes/assistances.routes');
 const authRoutes = require('./routes/auth.routes');
 const qualificationRoutes = require('./routes/qualifications.routes');
-const examsRoutes = require('./routes/exams.routes');
-const tBAvaragesRoutes = require('./routes/teachingBlockAverage.route');
-const generalAverage = require('./routes/generalAverage.routes');
+const examsRoutes = require('./routes/evaluations.routes');
+const tBAveragesRoutes = require('./routes/teachingBlockAverage.route');
+const generalAverage = require('./routes/overallCourseAverage.routes');
 const incidentsRoutes = require('./routes/incidents.route');
 const errorHandler = require('./middlewares/error.middleware');
 const scheduleSchoolDaysRoutes = require('./routes/scheduleSchoolDays.routes');
@@ -38,15 +38,14 @@ const annualAverageRoutes = require('./routes/annualAverages.routes');
 
 const corsOptions = {
     origin: (origin, callback) => {
-        // console.log("Origin recibido:", origin);
         if (!origin) return callback(null, true);
 
         if (
-          origin.startsWith("http://localhost") ||
-          origin.startsWith("http://127.0.0.1") ||
-          origin === "https://tudominio.com"
+            origin.startsWith("http://localhost") ||
+            origin.startsWith("http://127.0.0.1") ||
+            origin === "https://tudominio.com"
         ) {
-          return callback(null, true);
+            return callback(null, true);
         }
 
         return callback(new Error('No autorizado por CORS'));
@@ -58,7 +57,7 @@ const corsOptions = {
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
-    message: { error: "Demasiados intentos de login, espera unos minutos" },
+    message: {error: "Demasiados intentos de login, espera unos minutos"},
 });
 
 app.use(helmet());
@@ -86,7 +85,7 @@ app.use('/api', schedulesRoutes);
 app.use('/api', assistanceRoutes);
 app.use('/api', qualificationRoutes);
 app.use('/api', examsRoutes);
-app.use('/api', tBAvaragesRoutes);
+app.use('/api', tBAveragesRoutes);
 app.use('/api', generalAverage);
 app.use('/api', incidentsRoutes);
 app.use('/api', scheduleSchoolDaysRoutes);
@@ -106,12 +105,12 @@ sequelize.authenticate().then(() => {
 
     console.log('Base de datos sincronizada.');
 
-    if (process.env.NODE_ENV !=='test'){
+    if (process.env.NODE_ENV !== 'test') {
         app.listen(PORT, () => {
             console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
         });
     }
-    
+
 }).catch(err => {
     console.error('Error al conectar con la base de datos:', err.message);
 });

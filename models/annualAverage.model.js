@@ -1,6 +1,6 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
-const StudentsEnrollments = require('./studentsEnrollments.model');
+const StudentsEnrollments = require('./studentEnrollments.model');
 const Years = require('./years.model');
 
 const AnnualAverage = sequelize.define('AnnualAverage', {

@@ -1,15 +1,15 @@
-const RepresentativesAssignments = require('../models/representativesAssignments.model');
+const RepresentativesAssignments = require('../models/parentAssignments.model');
 const Persons = require('../models/persons.model');
 const Years = require('../models/years.model');
-const StudentEnrollments = require('../models/studentsEnrollments.model');
+const StudentEnrollments = require('../models/studentEnrollments.model');
 
 exports.createRepresentativesAssignments = async (req, res) => {
     try {
-        
-        const { yearId, personId, studentId, relationshipType } = req.body;
 
-        if ( !yearId || !personId || !studentId )
-            return res.status(400).json({ message: 'No ha completado los campos requeridos.' });
+        const {yearId, personId, studentId, relationshipType} = req.body;
+
+        if (!yearId || !personId || !studentId)
+            return res.status(400).json({message: 'No ha completado los campos requeridos.'});
 
         const newRepresentativesAssignments = await RepresentativesAssignments.create({
             yearId, personId, studentId, relationshipType
@@ -26,7 +26,7 @@ exports.createRepresentativesAssignments = async (req, res) => {
 
 exports.getRepresentativesAssignments = async (req, res) => {
     try {
-        
+
         const representativesAssignments = await RepresentativesAssignments.findAll({
             include: [
                 {
@@ -66,33 +66,33 @@ exports.getRepresentativesAssignments = async (req, res) => {
 
 exports.deleteParentsById = async (req, res) => {
     try {
-        const { id } = req.params;
+        const {id} = req.params;
 
         if (!id || isNaN(id)) {
-            return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
         }
 
-        const deleted = await RepresentativesAssignments.destroy({ where: {id} });
+        const deleted = await RepresentativesAssignments.destroy({where: {id}});
 
         if (deleted === 0) {
-            return res.status(404).json({ message: 'Apoderado no encontrado.' });
+            return res.status(404).json({message: 'Apoderado no encontrado.'});
         }
 
-        res.status(200).json({ message: 'Apoderado eliminado correctamente.' });
+        res.status(200).json({message: 'Apoderado eliminado correctamente.'});
     } catch (error) {
         console.error('Error al eliminar apoderado: ', error.message);
-        res.status(500).json({ message: 'Error al eliminar apoderado.'});
+        res.status(500).json({message: 'Error al eliminar apoderado.'});
     }
 }
 
 exports.updateParent = async (req, res) => {
-    const { id } = req.params;
-    const { yearId, personId, studentId, relationshipType } = req.body;
+    const {id} = req.params;
+    const {yearId, personId, studentId, relationshipType} = req.body;
     try {
         const parents = await RepresentativesAssignments.findByPk(id);
 
-        if(!parents) {
-            return res.status(404).json({ message: 'Apoderado no encontrado.' });
+        if (!parents) {
+            return res.status(404).json({message: 'Apoderado no encontrado.'});
         }
 
         parents.yearId = yearId;
@@ -104,6 +104,6 @@ exports.updateParent = async (req, res) => {
         res.status(200).json(parents);
     } catch (error) {
         console.error('Error al actualizar apoderado: ', error.message);
-        res.status(500).json({ message: 'Error al actualizar apoderado.' });
+        res.status(500).json({message: 'Error al actualizar apoderado.'});
     }
 }

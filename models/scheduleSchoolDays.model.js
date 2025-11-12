@@ -1,9 +1,9 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
 const Years = require('./years.model');
 const Schedules = require('./schedules.model');
 const TeachingBlocks = require('./teachingBlocks.model');
-const SchoolDays = require('./teachingDays.model');
+const SchoolDays = require('./schoolDays.model');
 
 const ScheduleSchoolDays = sequelize.define('ScheduleSchoolDays', {
     id: {
