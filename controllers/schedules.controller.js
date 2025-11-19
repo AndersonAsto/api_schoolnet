@@ -45,7 +45,6 @@ exports.createSchedule = async (req, res) => {
 
 exports.getSchedules = async (req, res) => {
     try {
-
         const schedules = await Schedules.findAll({
             include: [
                 {
@@ -88,8 +87,7 @@ exports.getSchedules = async (req, res) => {
             ],
             attributes: ['id', 'weekday', 'startTime', 'endTime', 'status', 'createdAt', 'updatedAt']
         });
-        res.json(schedules);
-
+        res.status(200).json(schedules);
     } catch (error) {
         console.error(error);
         res.status(500).json({
@@ -392,6 +390,61 @@ exports.updateSchedule = async (req, res) => {
         res.status(200).json(schedules);
     } catch (error) {
         console.error('Error al actualizar horario: ', error.message);
-        res.status(500).json({message: 'Error al actualizar horario.'});
+        res.status(500).json({ message: 'Error al actualizar horario.' });
+    }
+}
+
+exports.getSchedulesByYear = async (req, res) => {
+    try {
+        const { yearId } = req.params;
+
+        const schedulesByYear = await Schedules.findAll({
+            where: { yearId },
+            include: [
+                {
+                    model: Years,
+                    as: 'years',
+                    attributes: ['id', 'year']
+                },
+                {
+                    model: Courses,
+                    as: 'courses',
+                    attributes: ['id', 'course']
+                },
+                {
+                    model: Sections,
+                    as: 'sections',
+                    attributes: ['id', 'seccion']
+                },
+                {
+                    model: Grades,
+                    as: 'grades',
+                    attributes: ['id', 'grade']
+                },
+                {
+                    model: TeacherAssignments,
+                    as: 'teachers',
+                    attributes: ['id'],
+                    include: [
+                        {
+                            model: Persons,
+                            as: 'persons',
+                            attributes: ['id', 'names', 'lastNames', 'role']
+                        },
+                        {
+                            model: Years,
+                            as: 'years',
+                            attributes: ['id', 'year']
+                        },
+                    ]
+                }
+            ],
+            attributes: ['id', 'weekday', 'startTime', 'endTime', 'status', 'createdAt', 'updatedAt'],
+            order: [[{model: TeacherAssignments, as: "teachers"}, "id", "ASC"]],
+        });
+        res.status(200).json(schedulesByYear);
+    } catch (error) {
+        console.error('Error al obtener horarios por año: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

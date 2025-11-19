@@ -24,7 +24,7 @@ exports.createTeachingBlock = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({message: 'Error interno del servidor', error});
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -42,7 +42,7 @@ exports.getTeachingBlocks = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({message: 'Error al obtener bloques lectivos', error});
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -58,7 +58,7 @@ exports.getBlocksByYear = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({message: 'Error al obtener bloques', error});
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -88,9 +88,7 @@ exports.updateTeachingBlock = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            message: 'Error al actualizar un bloque lectivo.'
-        })
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -105,6 +103,6 @@ exports.deteleTeachingBlockById = async (req, res) => {
             res.status(404).json({message: 'Bloque lectivo no encontrado.'});
     } catch (error) {
         console.error(error);
-        res.status(500).json({message: 'Error al eliminar un bloque lectivo.'});
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

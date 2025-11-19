@@ -52,6 +52,10 @@ const TeacherGroups = sequelize.define('TeacherGroups', {
             model: Courses,
             key: 'id'
         }
+    },
+    status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
     }
 }, {
     tableName: 'teachergroups',

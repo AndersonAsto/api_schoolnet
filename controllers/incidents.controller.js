@@ -192,10 +192,10 @@ exports.updateIncident = async (req, res) => {
         incidents.schoolDayId = schoolDayId;
         incidents.incidentDetail = incidentDetail;
 
-        await incidents.save(),
-            res.status(200).json(incidents);
+        await incidents.save();
+        res.status(200).json(incidents);
     } catch (error) {
         console.error('Error al actualizar incidente: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

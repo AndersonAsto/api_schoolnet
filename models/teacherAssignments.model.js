@@ -4,7 +4,6 @@ const Persons = require('./persons.model');
 const Years = require('./years.model');
 const Courses = require('./courses.model');
 
-
 const TeacherAssignments = sequelize.define('TeacherAssignments', {
     id: {
         type: DataTypes.INTEGER,

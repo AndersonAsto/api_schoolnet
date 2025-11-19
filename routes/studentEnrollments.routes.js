@@ -9,4 +9,6 @@ router.get("/studentEnrollments/by-group/:asigmentId", studentEnrollmentsControl
 router.delete('/studentEnrollments/delete/:id', studentEnrollmentsController.deleteStudentById);
 router.put('/studentEnrollments/update/:id', studentEnrollmentsController.updatedStudent);
 
+router.get('/studentEnrollments/by-tutor/:tutorId', studentEnrollmentsController.getStudentsByTutorGroup);
+
 module.exports = router;

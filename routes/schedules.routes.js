@@ -9,5 +9,6 @@ router.get('/schedules/by-user/:userId/year/:yearId', schedulesController.getSch
 router.get('/schedules/by-teacher/:teacherId', schedulesController.getSchedulesByTeacher);
 router.delete('/schedules/delete/:id', schedulesController.deleteScheduleById);
 router.put('/schedules/update/:id', schedulesController.updateSchedule);
+router.get('/schedules/by-year/:yearId', schedulesController.getSchedulesByYear);
 
 module.exports = router;

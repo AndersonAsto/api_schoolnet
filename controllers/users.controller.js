@@ -75,10 +75,8 @@ exports.getUsersByRole = async (req, res) => {
         res.json(persons);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al cargar usaurios según ', error
-        })
+        console.error('Error de actualización: ', error.message);
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -91,7 +89,7 @@ exports.updateUser = async (req, res) => {
         const users = await Users.findByPk(id);
 
         if (!users)
-            return res.status(404).json({message: 'Usuario no encontrado'});
+            return res.status(404).json({message: 'Usuario no encontrado.'});
 
         users.personId = personId;
         users.userName = userName;
@@ -103,8 +101,8 @@ exports.updateUser = async (req, res) => {
         delete userResponse.passwordHash;
         res.status(200).json(userResponse);
     } catch (error) {
-        console.log(error);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.', error});
+        console.error('Error de actualización: ', error.message);
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -113,20 +111,17 @@ exports.deleteStudentById = async (req, res) => {
         const {id} = req.params;
         const deleted = await Users.destroy({where: {id}});
 
-        if (deleted) {
-            res.status(200).json({message: 'Usuario eliminado correctamente'});
-        } else {
-            res.status(404).json({message: 'Usuario no encontrado'});
-        }
+        if (deleted)
+            res.status(200).json({message: 'Usuario eliminado correctamente.'});
+        else
+            res.status(404).json({message: 'Usuario no encontrado.'});
 
     } catch (error) {
-        console.error(error);
+        console.error('Error de eliminación: ', error.message);
 
-        // Si el error viene de clave foránea u otra restricción
-        if (error.name === 'SequelizeForeignKeyConstraintError') {
-            return res.status(409).json({message: 'No se puede eliminar el usuario, tiene dependencias asociadas.'});
-        }
+        if (error.name === 'SequelizeForeignKeyConstraintError')
+            return res.status(409).json({ message: 'No se puede eliminar el usuario, tiene dependencias asociadas.' });
 
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.', error});
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

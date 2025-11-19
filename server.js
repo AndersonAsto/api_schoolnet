@@ -35,6 +35,7 @@ const errorHandler = require('./middlewares/error.middleware');
 const scheduleSchoolDaysRoutes = require('./routes/scheduleSchoolDays.routes');
 const teacherGroupsRoutes = require('./routes/teacherGroups.routes');
 const annualAverageRoutes = require('./routes/annualAverages.routes');
+const tutorsRoutes = require('./routes/tutor.routes');
 
 const corsOptions = {
     origin: (origin, callback) => {
@@ -48,7 +49,7 @@ const corsOptions = {
             return callback(null, true);
         }
 
-        return callback(new Error('No autorizado por CORS'));
+        return callback(new Error('No autorizado por CORS.'));
     },
 
     credentials: true,
@@ -57,7 +58,7 @@ const corsOptions = {
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
-    message: {error: "Demasiados intentos de login, espera unos minutos"},
+    message: {error: "Demasiados intentos de ingreso, espera unos minutos."},
 });
 
 app.use(helmet());
@@ -91,26 +92,23 @@ app.use('/api', incidentsRoutes);
 app.use('/api', scheduleSchoolDaysRoutes);
 app.use('/api', teacherGroupsRoutes);
 app.use('/api', annualAverageRoutes);
+app.use('/api', tutorsRoutes);
 
 app.get('/', (req, res) => {
     res.send('Bienvenido')
 });
 
 sequelize.authenticate().then(() => {
-
     console.log('Conexión a la base de datos exitosa.');
     return Promise.resolve();
-
 }).then(() => {
-
     console.log('Base de datos sincronizada.');
 
     if (process.env.NODE_ENV !== 'test') {
         app.listen(PORT, () => {
-            console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+            console.log(`Servidor corriendo en http://localhost:${PORT}`);
         });
     }
-
 }).catch(err => {
-    console.error('Error al conectar con la base de datos:', err.message);
+    console.error('Error al conectar con la base de datos: ', err.message);
 });

@@ -43,7 +43,7 @@ const ScheduleSchoolDays = sequelize.define('ScheduleSchoolDays', {
             key: 'id'
         }
     },
-    estado: {
+    status: {
         type: DataTypes.BOOLEAN,
         defaultValue: true,
     }

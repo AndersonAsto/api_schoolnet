@@ -5,6 +5,7 @@ const Grades = require('../models/grades.model');
 const Years = require('../models/years.model');
 const Schedules = require('../models/schedules.model');
 const TeacherGroups = require('../models/teacherGroups.model');
+const Tutors = require('../models/tutors.model');
 
 exports.createStudentEnrollment = async (req, res) => {
     try {
@@ -178,6 +179,54 @@ exports.getStudentsByGroup = async (req, res) => {
         });
     }
 };
+
+exports.getStudentsByTutorGroup = async (req, res) => {
+    try {
+        const { tutorId } = req.params;
+        if (!tutorId)
+            return res.status(400).json({ message: "El identificador del grupo de tutor es requerido." });
+
+        const group = await Tutors.findByPk(tutorId);
+        if (!group) 
+            return res.status(404).json({ message: "Grupo de tutor no encontrado." });
+        
+        const students = await StudentEnrollments.findAll({
+            where: {
+                gradeId: group.gradeId,
+                sectionId: group.sectionId,
+                status: true,
+            },
+            include: [
+                {
+                    model: Persons,
+                    as: "persons",
+                    attributes: ["id", "names", "lastNames", "role"],
+                },
+                {
+                    model: Grades,
+                    as: "grades",
+                    attributes: ["id", "grade"],
+                },
+                {
+                    model: Sections,
+                    as: "sections",
+                    attributes: ["id", "seccion"],
+                },
+                {
+                    model: Years,
+                    as: "years",
+                    attributes: ["id", "year"],
+                },
+            ],
+            order: [[{model: Persons, as: "persons"}, "lastNames", "ASC"]],
+        });
+
+        return res.status(200).json(students);
+    } catch (error) {
+        console.error('Error al obtener datos de estudiantes por grupo de tutor: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+    }
+}
 
 exports.deleteStudentById = async (req, res) => {
     try {

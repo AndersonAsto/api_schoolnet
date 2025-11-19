@@ -7,7 +7,8 @@ const Courses = require('../models/courses.model');
 const Grades = require('../models/grades.model');
 const Sections = require('../models/sections.model');
 const Persons = require('../models/persons.model');
-const {Op} = require('sequelize');
+const { Op } = require('sequelize');
+const Tutors = require('../models/tutors.model');
 
 exports.calculateAndSaveAnnualAverage = async (req, res) => {
     try {
@@ -96,4 +97,224 @@ exports.calculateAndSaveAnnualAverage = async (req, res) => {
             error: error.message
         });
     }
+};
+
+exports.getAnnualAverageByYearAndGroup = async (req, res) => {
+  try {
+    const { yearId, tutorId } = req.params;
+
+    if (!yearId) {
+      return res
+        .status(400)
+        .json({ message: "El identificador del año es requerido." });
+    }
+
+    if (!tutorId) {
+      return res
+        .status(400)
+        .json({ message: "El identificador del tutor es requerido." });
+    }
+
+    // 1. Buscar el grupo de tutor
+    const group = await Tutors.findByPk(tutorId);
+
+    if (!group) {
+      return res
+        .status(404)
+        .json({ message: "Grupo de tutor no encontrado." });
+    }
+
+    // 2. Buscar todas las matrículas (StudentsEnrollments) de ese año, grado y sección
+    const enrollments = await StudentsEnrollments.findAll({
+      where: {
+        yearId: yearId,
+        gradeId: group.gradeId,
+        sectionId: group.sectionId,
+        status: true,
+      },
+      include: [
+        {
+          model: Persons,
+          as: 'persons',
+          attributes: ['names', 'lastNames']
+        },
+        {
+          model: Grades,
+          as: 'grades',
+          attributes: ['grade']
+        },
+        {
+          model: Sections,
+          as: 'sections',
+          attributes: ['seccion']
+        },
+        {
+          model: Years,
+          as: 'years',
+          attributes: ['year']
+        }
+      ]
+    });
+
+    if (!enrollments.length) {
+      return res.status(200).json({
+        status: true,
+        message: 'No hay estudiantes matriculados para este año y grupo.',
+        data: []
+      });
+    }
+
+    const enrollmentIds = enrollments.map(e => e.id);
+
+    // 3. Buscar los AnnualAverage para esos students (studentId = enrollment.id)
+    const annualAverages = await AnnualAverage.findAll({
+      where: {
+        yearId: yearId,
+        studentId: {
+          [Op.in]: enrollmentIds
+        },
+        status: true
+      },
+      include: [
+        {
+          model: StudentsEnrollments,
+          as: 'students',
+          include: [
+            {
+              model: Persons,
+              as: 'persons',
+              attributes: ['names', 'lastNames']
+            },
+            {
+              model: Grades,
+              as: 'grades',
+              attributes: ['grade']
+            },
+            {
+              model: Sections,
+              as: 'sections',
+              attributes: ['seccion']
+            },
+            {
+              model: Years,
+              as: 'years',
+              attributes: ['year']
+            }
+          ]
+        },
+        {
+          model: Years,
+          as: 'years',
+          attributes: ['year']
+        }
+      ],
+      order: [
+        [
+          { model: StudentsEnrollments, as: 'students' },
+          { model: Persons, as: 'persons' },
+          'lastNames',
+          'ASC'
+        ]
+      ]
+    });
+
+    return res.status(200).json({
+      status: true,
+      message: 'Promedios anuales por año y grupo encontrados.',
+      data: annualAverages
+    });
+  } catch (error) {
+    console.error(
+      'Error al obtener datos de promedios anuales por año y grupo',
+      error.message
+    );
+    res.status(500).json({
+      status: false,
+      message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'
+    });
+  }
+};
+
+exports.getAnnualAverageByYearAndStudent = async (req, res) => {
+  try {
+    const { yearId, studentId } = req.params;
+
+    if (!yearId || !studentId) {
+      return res.status(400).json({
+        status: false,
+        message: 'El año y el estudiante son requeridos.'
+      });
+    }
+
+    const annualAverage = await AnnualAverage.findOne({
+      where: {
+        yearId,
+        studentId,        // 👈 ojo: este studentId es el ID de StudentsEnrollments
+        status: true
+      },
+      include: [
+        {
+          model: StudentsEnrollments,
+          as: 'students',
+          include: [
+            {
+              model: Persons,
+              as: 'persons',
+              attributes: ['names', 'lastNames']
+            },
+            {
+              model: Grades,
+              as: 'grades',
+              attributes: ['grade']
+            },
+            {
+              model: Sections,
+              as: 'sections',
+              attributes: ['seccion']
+            },
+            {
+              model: Years,
+              as: 'years',
+              attributes: ['year']
+            }
+          ]
+        },
+        {
+          model: Years,
+          as: 'years',
+          attributes: ['year']
+        }
+      ],
+      order: [
+        [
+          { model: StudentsEnrollments, as: 'students' },
+          { model: Persons, as: 'persons' },
+          'lastNames',
+          'ASC'
+        ]
+      ]
+    });
+
+    if (!annualAverage) {
+      return res.status(404).json({
+        status: false,
+        message: 'No se encontró promedio anual para este estudiante en ese año.'
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: 'Promedio anual encontrado.',
+      data: annualAverage
+    });
+  } catch (error) {
+    console.error(
+      'Error al obtener promedio anual por año y estudiante',
+      error.message
+    );
+    return res.status(500).json({
+      status: false,
+      message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'
+    });
+  }
 };

@@ -34,6 +34,10 @@ const Tutors = sequelize.define('Tutors', {
             model: Sections,
             key: 'id'
         }
+    },
+    status: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true
     }
 }, {
     tableName: 'tutorteachers',

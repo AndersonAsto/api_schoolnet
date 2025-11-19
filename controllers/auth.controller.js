@@ -2,56 +2,94 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const Users = require('../models/users.model');
 const tokenBlacklist = require('../services/tokenBlacklist');
-const {generateAccessToken, generateRefreshToken} = require('../utils/jwt');
+const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
+const TeacherAssignments = require('../models/teacherAssignments.model');
+const Tutors = require('../models/tutors.model');
 
 // 🔐 LOGIN
 exports.login = async (req, res, next) => {
-    try {
-        const {username, password} = req.body;
-        if (!username || !password) {
-            return res.status(400).json({error: "Faltan credenciales"});
-        }
-
-        // Buscar usuario en DB
-        const user = await Users.findOne({
-            where: {userName: username, status: true},
-            attributes: ["id", "userName", "passwordHash", "role"]
-        });
-
-        if (!user) {
-            console.warn(`❌ Intento fallido de login → usuario no encontrado: ${username}`);
-            return res.status(401).json({error: "Usuario o contraseña inválidos"});
-        }
-
-        // Validar password
-        const validPassword = await bcrypt.compare(password, user.passwordHash);
-        if (!validPassword) {
-            console.warn(`❌ Intento fallido de login → contraseña incorrecta para usuario: ${username}`);
-            return res.status(401).json({error: "Usuario o contraseña inválidos"});
-        }
-
-        // Generar tokens
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
-
-        // (Opcional) Guardar refreshToken en DB si quieres invalidarlo manualmente
-        // await Users.update({ refreshToken }, { where: { id: user.id } });
-
-        return res.json({
-            token: accessToken,
-            refreshToken,
-            id: user.id,
-            username: user.userName,
-            role: user.role,
-            user: {
-                id: user.id,
-                username: user.userName,
-                role: user.role
-            }
-        });
-    } catch (err) {
-        next(err);
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "Faltan credenciales" });
     }
+
+    // 👇 AQUI: asegúrate de traer personId
+    const user = await Users.findOne({
+      where: { userName: username, status: true },
+      attributes: ["id", "userName", "passwordHash", "role", "personId"],
+    });
+
+    if (!user) {
+      console.warn(`❌ Intento fallido de login → usuario no encontrado: ${username}`);
+      return res.status(401).json({ error: "Usuario o contraseña inválidos" });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.passwordHash);
+    if (!validPassword) {
+      console.warn(`❌ Intento fallido de login → contraseña incorrecta para usuario: ${username}`);
+      return res.status(401).json({ error: "Usuario o contraseña inválidos" });
+    }
+
+    // ==========================
+    // Lógica docente / tutor
+    // ==========================
+    let isTeacher = false;
+    let isTutor = false;
+    let tutorId = null;
+
+    // ⚠️ Solo buscamos si tenemos personId
+    if (user.personId) {
+      const teacherAssignment = await TeacherAssignments.findOne({
+        where: {
+          personId: user.personId,
+          status: true,
+        },
+        attributes: ['id'],
+      });
+
+      if (teacherAssignment) {
+        isTeacher = true;
+
+        const tutorRecord = await Tutors.findOne({
+          where: {
+            teacherId: teacherAssignment.id,
+            status: true,
+          },
+          attributes: ['id'],
+        });
+
+        if (tutorRecord) {
+          isTutor = true;
+          tutorId = tutorRecord.id;
+        }
+      }
+    }
+
+    // Generar tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    return res.json({
+      token: accessToken,
+      refreshToken,
+      id: user.id,
+      username: user.userName,
+      role: user.role,
+      user: {
+        id: user.id,
+        username: user.userName,
+        role: user.role,
+        personId: user.personId,
+        isTeacher,
+        isTutor,
+        tutorId,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
 };
 
 // 🔄 REFRESH TOKEN

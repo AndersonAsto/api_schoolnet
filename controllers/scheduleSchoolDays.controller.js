@@ -7,7 +7,6 @@ const {Op} = require('sequelize');
 const Users = require('../models/users.model');
 const Years = require('../models/years.model');
 
-// POST automático de ScheduleSchoolDays
 exports.generateScheduleDays = async (req, res) => {
     const {yearId, scheduleId} = req.body;
 
@@ -93,7 +92,6 @@ exports.generateScheduleDays = async (req, res) => {
     }
 };
 
-// GET: listar los días asociados a un horario y año
 exports.getScheduleDays = async (req, res) => {
     const {yearId, scheduleId} = req.query;
 
@@ -104,8 +102,10 @@ exports.getScheduleDays = async (req, res) => {
                 ...(scheduleId && {scheduleId})
             },
             include: [
-                {model: SchoolDays, as: 'schoolDays', attributes: ['teachingDay', 'weekday']},
-                {model: TeachingBlocks, as: 'teachingBlocks', attributes: ['teachingBlock']}
+                {model: SchoolDays, as: 'schoolDays', attributes: ['id', 'teachingDay', 'weekday']},
+                {model: Years, as: 'years', attributes: ['id', 'year']},
+                {model: Schedules, as: 'schedules'},
+                {model: TeachingBlocks, as: 'teachingBlocks', attributes: ['id', 'teachingBlock']}
             ],
             order: [['id', 'ASC']]
         });
@@ -217,16 +217,10 @@ exports.getDaysBySchedule = async (req, res) => {
         const days = await ScheduleSchoolDays.findAll({
             where: {scheduleId},
             include: [
-                {
-                    model: SchoolDays,
-                    as: 'schoolDays',
-                    attributes: ['id', 'teachingDay', 'weekday']
-                },
-                {
-                    model: TeachingBlocks,
-                    as: 'teachingBlocks',
-                    attributes: ['id', 'teachingBlock']
-                }
+                {model: SchoolDays, as: 'schoolDays', attributes: ['id', 'teachingDay', 'weekday']},
+                {model: Years, as: 'years', attributes: ['id', 'year']},
+                {model: Schedules, as: 'schedules'},
+                {model: TeachingBlocks, as: 'teachingBlocks', attributes: ['id', 'teachingBlock']}
             ],
             order: [[{model: SchoolDays, as: 'schoolDays'}, 'teachingDay', 'ASC']]
         });
@@ -242,4 +236,3 @@ exports.getDaysBySchedule = async (req, res) => {
         res.status(500).json({message: "Error al obtener los días del horario", error: error.message});
     }
 };
-

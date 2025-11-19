@@ -16,7 +16,7 @@ exports.createHoliday = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({message: 'Error al crear día feriado', error});
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -84,9 +84,9 @@ exports.updateHolyday = async (req, res) => {
             return res.status(404).json({message: 'Incidente no encontrado.'});
         }
 
-        holy_days.yearId = yearId,
-            holy_days.holiday = holiday,
-            await holy_days.save();
+        holy_days.yearId = yearId;
+        holy_days.holiday = holiday;
+        await holy_days.save();
 
         res.status(200).json(holy_days);
     } catch (error) {

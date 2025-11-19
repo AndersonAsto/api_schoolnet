@@ -7,7 +7,75 @@ const TeacherAssignments = require('../models/teacherAssignments.model');
 const Users = require('../models/users.model');
 const Years = require('../models/years.model');
 
-exports.getTGroupsByUserYear = async (req, res) => {
+exports.createTeacherGroup = async (req, res) => {
+    try {
+        const { teacherAssignmentId, yearId, courseId, gradeId, sectionId } = req.body;
+
+        if (!teacherAssignmentId || !yearId || !courseId || !gradeId || !sectionId)
+            return res.status(400).json({ message: 'No se han completado los campos requeridos. '});
+
+        const newTeacherGroup = await TeacherGroups.create({
+            teacherAssignmentId, yearId, courseId, gradeId, sectionId
+        });
+
+        res.status(201).json(newTeacherGroup);
+    } catch (error) {
+        console.error('Error al crear grupo de docente: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+    }
+}
+
+exports.getTeacherGroups = async (req, res) => {
+    try {
+        const teacherGroups = await TeacherGroups.findAll({
+            include: [
+                {
+                    model: TeacherAssignments,
+                    as: 'teacherassignments',
+                    attributes: ['id'],
+                    include: [
+                        {
+                            model: Persons,
+                            as: 'persons',
+                            attributes: ['id', 'names', 'lastNames', 'role']
+                        },
+                        {
+                            model: Years,
+                            as: 'years',
+                            attributes: ['id', 'year']
+                        },
+                    ]
+                },
+                {
+                    model: Years,
+                    as: 'years',
+                    attributes: ['id', 'year']
+                },
+                {
+                    model: Courses,
+                    as: 'courses',
+                    attributes: ['id', 'course', 'descripcion']
+                },
+                {
+                    model: Grades,
+                    as: 'grades',
+                    attributes: ['id', 'grade']
+                },
+                {
+                    model: Sections,
+                    as: 'sections',
+                    attributes: ['id', 'seccion']
+                }
+            ]
+        });
+        res.status(200).json(teacherGroups);
+    } catch (error) {
+        console.error('Error al obtener grupos de docentes: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+    }
+}
+
+exports.getGroupsByUserYear = async (req, res) => {
     try {
         const {userId, yearId} = req.params;
 
@@ -91,5 +159,47 @@ exports.getTGroupsByUserYear = async (req, res) => {
             message: "Error al obtener horarios del docente por año",
             error: error.message,
         });
+    }
+}
+
+exports.updateTeacherGroup = async (req, res) => {
+    const { id } = req.params;
+    const { teacherAssignmentId, yearId, courseId, gradeId, sectionId } = req.body;
+    try {
+        const teacherGroups = await TeacherGroups.findByPk(id);
+
+        if (!teacherGroups)
+            return res.status(404).json({ message: 'Grupo de docente no encontrado.' });
+
+        teacherGroups.teacherAssignmentId = teacherAssignmentId;
+        teacherGroups.yearId = yearId;
+        teacherGroups.courseId = courseId;
+        teacherGroups.gradeId = gradeId;
+        teacherGroups.sectionId = sectionId;
+
+        await teacherGroups.save();
+        res.status(200).json(teacherGroups);
+    } catch (error) {
+        console.error('Error al actualizar grupo de docente: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+    }
+}
+
+exports.deleteTeacherGroup = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id || isNaN(id)) 
+            return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+
+        const deleted = await TeacherGroups.destroy({ where: { id } });
+
+        if (deleted === 0)
+            return res.status(404).json({ message: 'Grupo de docente no encontrado. '});
+
+        res.status(200).json({ message: 'Grupo de docente eliminado correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar grupo de docente: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
