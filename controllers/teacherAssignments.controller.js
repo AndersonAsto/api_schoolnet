@@ -22,7 +22,6 @@ exports.createTeacherAssignament = async (req, res) => {
 
 exports.getTeacherAssignaments = async (req, res) => {
     try {
-
         const teacherAssignments = await TeacherAssignments.findAll({
             include: [
                 {

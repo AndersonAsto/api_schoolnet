@@ -318,3 +318,89 @@ exports.getAnnualAverageByYearAndStudent = async (req, res) => {
     });
   }
 };
+
+exports.getAnnualAveragesByYearAndStudents = async (req, res) => {
+  try {
+    const { yearId, studentIds } = req.body;
+
+    if (!yearId || !Array.isArray(studentIds) || studentIds.length === 0) {
+      return res.status(400).json({
+        status: false,
+        message: 'El año y la lista de estudiantes son requeridos.',
+      });
+    }
+
+    const annualAverages = await AnnualAverage.findAll({
+      where: {
+        yearId,
+        studentId: studentIds, // IN (...)
+        status: true,
+      },
+      include: [
+        {
+          model: StudentsEnrollments,
+          as: 'students',
+          include: [
+            {
+              model: Persons,
+              as: 'persons',
+              attributes: ['names', 'lastNames'],
+            },
+            {
+              model: Grades,
+              as: 'grades',
+              attributes: ['grade'],
+            },
+            {
+              model: Sections,
+              as: 'sections',
+              attributes: ['seccion'],
+            },
+            {
+              model: Years,
+              as: 'years',
+              attributes: ['year'],
+            },
+          ],
+        },
+        {
+          model: Years,
+          as: 'years',
+          attributes: ['year'],
+        },
+      ],
+      order: [
+        [
+          { model: StudentsEnrollments, as: 'students' },
+          { model: Persons, as: 'persons' },
+          'lastNames',
+          'ASC',
+        ],
+      ],
+    });
+
+    if (!annualAverages || annualAverages.length === 0) {
+      return res.status(404).json({
+        status: false,
+        message:
+          'No se encontraron promedios anuales para los estudiantes en ese año.',
+        data: [],
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: 'Promedios anuales encontrados.',
+      data: annualAverages,
+    });
+  } catch (error) {
+    console.error(
+      'Error al obtener promedios anuales por año y lista de estudiantes',
+      error.message
+    );
+    return res.status(500).json({
+      status: false,
+      message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
+    });
+  }
+};

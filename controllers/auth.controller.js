@@ -1,10 +1,10 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Users = require('../models/users.model');
 const tokenBlacklist = require('../services/tokenBlacklist');
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
 const TeacherAssignments = require('../models/teacherAssignments.model');
 const Tutors = require('../models/tutors.model');
+const Users = require('../models/users.model');
 
 // 🔐 LOGIN
 exports.login = async (req, res, next) => {
@@ -21,13 +21,13 @@ exports.login = async (req, res, next) => {
     });
 
     if (!user) {
-      console.warn(`❌ Intento fallido de login → usuario no encontrado: ${username}`);
+      console.warn(`Intento fallido de login → usuario no encontrado: ${username}`);
       return res.status(401).json({ error: "Usuario o contraseña inválidos" });
     }
 
     const validPassword = await bcrypt.compare(password, user.passwordHash);
     if (!validPassword) {
-      console.warn(`❌ Intento fallido de login → contraseña incorrecta para usuario: ${username}`);
+      console.warn(`Intento fallido de login → contraseña incorrecta para usuario: ${username}`);
       return res.status(401).json({ error: "Usuario o contraseña inválidos" });
     }
 

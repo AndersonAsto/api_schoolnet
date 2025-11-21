@@ -6,5 +6,6 @@ router.post('/representativeAssignments/create', representativeAssignments.creat
 router.get('/representativeAssignments/list', representativeAssignments.getRepresentativesAssignments);
 router.delete('/representativeAssignments/delete/:id', representativeAssignments.deleteParentsById);
 router.put('/representativeAssignments/update/:id', representativeAssignments.updateParent);
+router.get('/parentAssignments/by-user/:userId', representativeAssignments.getParentByUser);
 
 module.exports = router;

@@ -30,7 +30,6 @@ exports.createStudentEnrollment = async (req, res) => {
 
 exports.getStudentEnrollments = async (req, res) => {
     try {
-
         const studentEnrollments = await StudentEnrollments.findAll({
             include: [
                 {

@@ -1,7 +1,8 @@
 const RepresentativesAssignments = require('../models/parentAssignments.model');
+const StudentEnrollments = require('../models/studentEnrollments.model');
 const Persons = require('../models/persons.model');
 const Years = require('../models/years.model');
-const StudentEnrollments = require('../models/studentEnrollments.model');
+const Users = require('../models/users.model');
 
 exports.createRepresentativesAssignments = async (req, res) => {
     try {
@@ -26,7 +27,6 @@ exports.createRepresentativesAssignments = async (req, res) => {
 
 exports.getRepresentativesAssignments = async (req, res) => {
     try {
-
         const representativesAssignments = await RepresentativesAssignments.findAll({
             include: [
                 {
@@ -55,7 +55,6 @@ exports.getRepresentativesAssignments = async (req, res) => {
             attributes: ['id', 'relationshipType', 'status', 'createdAt', 'updatedAt']
         });
         res.json(representativesAssignments);
-
     } catch (error) {
         console.error(error);
         res.status(500).json({
@@ -105,5 +104,55 @@ exports.updateParent = async (req, res) => {
     } catch (error) {
         console.error('Error al actualizar apoderado: ', error.message);
         res.status(500).json({message: 'Error al actualizar apoderado.'});
+    }
+}
+
+exports.getParentByUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await Users.findByPk(userId);
+        if (!user)
+            return res.status(404).json({error: "Usuario no encontrado."});
+
+        const person = await Persons.findByPk(user.personId);
+        if (!person)
+            return res.status(404).json({error: "Persona asociada no encontrada."});
+
+        const parent = await RepresentativesAssignments.findAll({
+            where: { personId: person.id },
+            include: [
+                {
+                    model: Persons,
+                    as: 'persons',
+                    attributes: ['id', 'names', 'lastNames', 'role']
+                },
+                {
+                    model: Years,
+                    as: 'years',
+                    attributes: ['id', 'year']
+                },
+                {
+                    model: StudentEnrollments,
+                    as: 'students',
+                    attributes: ['id'],
+                    include: [
+                        {
+                            model: Persons,
+                            as: 'persons',
+                            attributes: ['id', 'names', 'lastNames', 'role']
+                        }
+                    ]
+                }
+            ],
+            attributes: ['id', 'relationshipType', 'status', 'createdAt', 'updatedAt']
+        });
+        if (!parent)
+            return res.status(404).json({error: "No se encontraron los datos del padre de familia."});
+
+        res.status(200).json(parent);
+    } catch (error) {
+        console.error('Error al obtener datos de padre de familia por identificador: ', error.message);
+        res.status(500).json('Error interno en el servidor. Inténtelo de nuevo más tarde.');
     }
 }

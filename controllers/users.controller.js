@@ -29,8 +29,8 @@ exports.createUser = async (req, res) => {
         res.status(201).json(userResponse);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al crear usuario', error});
+        console.error('Error de creación: ', error.message);
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -48,8 +48,8 @@ exports.getUsers = async (req, res) => {
         res.status(200).json(users);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: "Error al obtener usuarios", error});
+        console.error('Error de obtención de datos: ', error.message);
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 

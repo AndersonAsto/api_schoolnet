@@ -5,6 +5,7 @@ const TeacherAssignments = require('../models/teacherAssignments.model');
 const Sections = require('../models/sections.model');
 const Persons = require('../models/persons.model');
 const Courses = require('../models/courses.model');
+const StudentsEnrollments = require('../models/studentEnrollments.model');
 
 exports.createTutor = async (req, res) => {
     try {
@@ -63,6 +64,61 @@ exports.getTutors = async (req, res) => {
         res.status(200).json(tutors);
     } catch (error) {
         console.error('Error al obtener datos de tutores: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+    }
+}
+
+exports.getTutorByStudent = async (req, res) => {
+    try {
+        const { studentId } = req.params;
+
+        const group = await StudentsEnrollments.findByPk(studentId);
+        if (!group) 
+            return res.status(404).json({ message: "Estudiante no encontrado." });
+
+        const tutorByStudent = await Tutors.findOne({
+            where: {
+                gradeId: group.gradeId,
+                sectionId: group.sectionId,
+            },
+            include: [
+                {
+                    model: TeacherAssignments,
+                    as: 'teachers',
+                    attributes: ['id'],
+                    include: [
+                        {
+                            model: Persons,
+                            as: 'persons',
+                            attributes: ['id', 'names', 'lastNames', 'role']
+                        },
+                        {
+                            model: Years,
+                            as: 'years',
+                            attributes: ['id', 'year']
+                        },
+                        {
+                            model: Courses,
+                            as: 'courses',
+                            attributes: ['id', 'course', 'descripcion']
+                        },
+                    ]
+                },
+                {
+                    model: Grades,
+                    as: 'grades',
+                    attributes: ['id', 'grade']
+                },
+                {
+                    model: Sections,
+                    as: 'sections',
+                    attributes: ['id', 'seccion']
+                }
+            ]
+        });
+        res.status(200).json(tutorByStudent);
+    } catch (error) {
+        console.error('Error al obtener datos de tutor por estudiante: ', error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

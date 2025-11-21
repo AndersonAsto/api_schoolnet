@@ -6,6 +6,7 @@ const TeacherGroups = require('../models/teacherGroups.model');
 const TeacherAssignments = require('../models/teacherAssignments.model');
 const Users = require('../models/users.model');
 const Years = require('../models/years.model');
+const Tutors = require('../models/tutors.model');
 
 exports.createTeacherGroup = async (req, res) => {
     try {
@@ -151,7 +152,6 @@ exports.getGroupsByUserYear = async (req, res) => {
             attributes: ["id"],
             order: [[{model: Grades, as: 'grades'}, 'grade', "ASC"]],
         });
-
         res.status(200).json(teacherGroups);
     } catch (error) {
         console.error("Error al obtener grupos asignados", error);
@@ -159,6 +159,72 @@ exports.getGroupsByUserYear = async (req, res) => {
             message: "Error al obtener horarios del docente por año",
             error: error.message,
         });
+    }
+}
+
+exports.getTeacherGroupsByGradeAndSection = async (req, res) => {
+    try {
+        const { yearId, tutorId } = req.params;
+
+        if (!tutorId)
+            return res.status(400).json({ message: "El identificador del grupo de tutor es requerido." });
+
+        const group = await Tutors.findByPk(tutorId);
+        if (!group) 
+            return res.status(404).json({ message: "Grupo de tutor no encontrado." });
+
+        const teacherGroups = await TeacherGroups.findAll({
+            where: {
+                gradeId: group.gradeId,
+                sectionId: group.sectionId,
+                yearId,
+            },
+            include: [
+                {
+                    model: Years,
+                    as: "years",
+                    attributes: ["id", "year"],
+                },
+                {
+                    model: Courses,
+                    as: "courses",
+                    attributes: ["id", "course"],
+                },
+                {
+                    model: Sections,
+                    as: "sections",
+                    attributes: ["id", "seccion"],
+                },
+                {
+                    model: Grades,
+                    as: "grades",
+                    attributes: ["id", "grade"],
+                },
+                {
+                    model: TeacherAssignments,
+                    as: "teacherassignments",
+                    attributes: ["id"],
+                    include: [
+                        {
+                            model: Persons,
+                            as: "persons",
+                            attributes: ["id", "names", "lastNames", "role"],
+                        },
+                        {
+                            model: Years,
+                            as: "years",
+                            attributes: ["id", "year"],
+                        },
+                    ],
+                },
+            ],
+            attributes: ["id"],
+            order: [[{model: Grades, as: 'grades'}, 'grade', "ASC"]],
+        });
+        res.status(200).json(teacherGroups);
+    } catch (error) {
+        console.error('Error al obtener grupos por grados y sección: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
