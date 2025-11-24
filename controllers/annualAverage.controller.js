@@ -10,7 +10,7 @@ const Persons = require('../models/persons.model');
 const { Op } = require('sequelize');
 const Tutors = require('../models/tutors.model');
 
-exports.calculateAndSaveAnnualAverage = async (req, res) => {
+exports.calculateAnnualAverage = async (req, res) => {
     try {
         const {studentId, yearId} = req.body;
 
@@ -99,7 +99,7 @@ exports.calculateAndSaveAnnualAverage = async (req, res) => {
     }
 };
 
-exports.getAnnualAverageByYearAndGroup = async (req, res) => {
+exports.getAnnualAverageByYearAndTutor = async (req, res) => {
   try {
     const { yearId, tutorId } = req.params;
 
@@ -319,7 +319,7 @@ exports.getAnnualAverageByYearAndStudent = async (req, res) => {
   }
 };
 
-exports.getAnnualAveragesByYearAndStudents = async (req, res) => {
+exports.getAnnualAverageByYearAndStudents = async (req, res) => {
   try {
     const { yearId, studentIds } = req.body;
 

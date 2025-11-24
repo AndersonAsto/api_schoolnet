@@ -209,3 +209,54 @@ exports.deleteTutor = async (req, res) => {
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
+
+exports.getTutorsByYear = async (req, res) => {
+    try {
+        const { yearId } = req.params;
+
+        if (!yearId)
+            res.status(404).json('No ha seleccioando un año.');
+
+        const tutors = await Tutors.findAll({
+            where: { yearId },
+            include: [
+                {
+                    model: TeacherAssignments,
+                    as: 'teachers',
+                    attributes: ['id'],
+                    include: [
+                        {
+                            model: Persons,
+                            as: 'persons',
+                            attributes: ['id', 'names', 'lastNames', 'role']
+                        },
+                        {
+                            model: Years,
+                            as: 'years',
+                            attributes: ['id', 'year']
+                        },
+                        {
+                            model: Courses,
+                            as: 'courses',
+                            attributes: ['id', 'course', 'descripcion']
+                        },
+                    ]
+                },
+                {
+                    model: Grades,
+                    as: 'grades',
+                    attributes: ['id', 'grade']
+                },
+                {
+                    model: Sections,
+                    as: 'sections',
+                    attributes: ['id', 'seccion']
+                }
+            ]
+        });
+        res.status(200).json(tutors);
+    } catch (error) {
+        console.error('Error al obtener datos de tutores: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+    }
+}

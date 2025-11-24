@@ -5,12 +5,11 @@ const Schedules = require('../models/schedules.model');
 const TeachingDays = require('../models/schoolDays.model');
 const Persons = require('../models/persons.model');
 const Years = require('../models/years.model');
-const Assistances = require('../models/assistances.model');
+const Assistances = require('../models/attendances.model');
 const TeacherGroups = require('../models/teacherGroups.model');
 const {Op} = require('sequelize');
 
-// Crear calificaciones en bulk
-exports.createBulk = async (req, res) => {
+exports.bulkCreateQualifications = async (req, res) => {
     try {
         const qualifications = req.body; // Array de calificaciones
         if (!Array.isArray(qualifications) || qualifications.length === 0) {
@@ -32,7 +31,6 @@ exports.createBulk = async (req, res) => {
     }
 };
 
-// Obtener calificaciones completas con info de estudiante y horario
 exports.getQualifications = async (req, res) => {
     try {
         const qualifications = await Qualifications.findAll({
@@ -88,7 +86,6 @@ exports.getQualifications = async (req, res) => {
     }
 };
 
-// Actualizar calificaciones existentes en bulk
 exports.bulkUpdateQualifications = async (req, res) => {
     try {
         const updates = req.body; // [{id, rating, ratingDetail, scheduleId, schoolDayId, studentId}, ...]
@@ -143,8 +140,7 @@ exports.bulkUpdateQualifications = async (req, res) => {
     }
 };
 
-// Obtener calificaciones por horario y día
-exports.getByScheduleAndDay = async (req, res) => {
+exports.getQualificationsByScheduleAndDay = async (req, res) => {
     try {
         const {scheduleId, schoolDayId} = req.query;
 
@@ -185,7 +181,7 @@ exports.getByScheduleAndDay = async (req, res) => {
     }
 };
 
-exports.getByStudentAndSchedule = async (req, res) => {
+exports.getQualificationsByScheduleAndStudent = async (req, res) => {
     const {studentId, scheduleId} = req.params;
     try {
         const qualifications = await Qualifications.findAll({

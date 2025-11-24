@@ -1,6 +1,6 @@
 const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
-const StudentsEnrollments = require('./studentEnrollments.model');
+const StudentEnrollments = require('./studentEnrollments.model');
 const Years = require('./years.model');
 
 const AnnualAverage = sequelize.define('AnnualAverage', {
@@ -22,7 +22,7 @@ const AnnualAverage = sequelize.define('AnnualAverage', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: StudentsEnrollments,
+            model: StudentEnrollments,
             key: 'id'
         }
     },
@@ -44,7 +44,7 @@ AnnualAverage.belongsTo(Years, {
     as: 'years'
 });
 
-AnnualAverage.belongsTo(StudentsEnrollments, {
+AnnualAverage.belongsTo(StudentEnrollments, {
     foreignKey: 'studentId',
     as: 'students'
 });

@@ -4,7 +4,7 @@ const StudentsEnrollments = require('./studentEnrollments.model');
 const TeachingBlocks = require('./teachingBlocks.model');
 const TeacherGroups = require('./teacherGroups.model');
 
-const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
+const TeachingBlockAverage = sequelize.define('TeachingBlockAverage', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -59,19 +59,19 @@ const TeachingBlockAvarage = sequelize.define('TeachingBlockAvarage', {
     timestamps: true
 });
 
-TeachingBlockAvarage.belongsTo(StudentsEnrollments, {
+TeachingBlockAverage.belongsTo(StudentsEnrollments, {
     foreignKey: 'studentId',
     as: 'students'
 });
 
-TeachingBlockAvarage.belongsTo(TeachingBlocks, {
+TeachingBlockAverage.belongsTo(TeachingBlocks, {
     foreignKey: 'teachingBlockId',
     as: 'teachingblocks'
 });
 
-TeachingBlockAvarage.belongsTo(TeacherGroups, {
+TeachingBlockAverage.belongsTo(TeacherGroups, {
     foreignKey: 'assignmentId',
     as: 'teachergroups'
 });
 
-module.exports = TeachingBlockAvarage;
+module.exports = TeachingBlockAverage;

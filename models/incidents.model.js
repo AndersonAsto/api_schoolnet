@@ -1,6 +1,6 @@
 const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
-const StudentsEnrollments = require('./studentEnrollments.model');
+const StudentEnrollments = require('./studentEnrollments.model');
 const Schedules = require('./schedules.model');
 const SchoolDays = require('./schoolDays.model');
 
@@ -14,7 +14,7 @@ const Incidents = sequelize.define('Incidents', {
         type: DataTypes.INTEGER,
         allowNull: false,
         key: {
-            model: StudentsEnrollments,
+            model: StudentEnrollments,
             key: 'id'
         }
     },
@@ -47,7 +47,7 @@ const Incidents = sequelize.define('Incidents', {
     timestamps: true
 });
 
-Incidents.belongsTo(StudentsEnrollments, {
+Incidents.belongsTo(StudentEnrollments, {
     foreignKey: 'studentId',
     as: 'students'
 });

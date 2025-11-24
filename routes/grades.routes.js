@@ -5,6 +5,6 @@ const gradesController = require('../controllers/grades.controller');
 router.post('/grades/create', gradesController.createGrade);
 router.get('/grades/list', gradesController.getGrades);
 router.put('/grades/update/:id', gradesController.updateGrade);
-router.delete('/grades/delete/:id', gradesController.deleteGradeById);
+router.delete('/grades/delete/:id', gradesController.deleteGrade);
 
 module.exports = router;

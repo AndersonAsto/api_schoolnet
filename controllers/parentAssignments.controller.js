@@ -4,7 +4,7 @@ const Persons = require('../models/persons.model');
 const Years = require('../models/years.model');
 const Users = require('../models/users.model');
 
-exports.createRepresentativesAssignments = async (req, res) => {
+exports.createParentAssignment = async (req, res) => {
     try {
 
         const {yearId, personId, studentId, relationshipType} = req.body;
@@ -25,7 +25,7 @@ exports.createRepresentativesAssignments = async (req, res) => {
     }
 }
 
-exports.getRepresentativesAssignments = async (req, res) => {
+exports.getParentAssignments = async (req, res) => {
     try {
         const representativesAssignments = await RepresentativesAssignments.findAll({
             include: [
@@ -63,28 +63,7 @@ exports.getRepresentativesAssignments = async (req, res) => {
     }
 }
 
-exports.deleteParentsById = async (req, res) => {
-    try {
-        const {id} = req.params;
-
-        if (!id || isNaN(id)) {
-            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
-        }
-
-        const deleted = await RepresentativesAssignments.destroy({where: {id}});
-
-        if (deleted === 0) {
-            return res.status(404).json({message: 'Apoderado no encontrado.'});
-        }
-
-        res.status(200).json({message: 'Apoderado eliminado correctamente.'});
-    } catch (error) {
-        console.error('Error al eliminar apoderado: ', error.message);
-        res.status(500).json({message: 'Error al eliminar apoderado.'});
-    }
-}
-
-exports.updateParent = async (req, res) => {
+exports.updateParentAssignment = async (req, res) => {
     const {id} = req.params;
     const {yearId, personId, studentId, relationshipType} = req.body;
     try {
@@ -107,7 +86,28 @@ exports.updateParent = async (req, res) => {
     }
 }
 
-exports.getParentByUser = async (req, res) => {
+exports.deleteParentAssignment = async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
+        }
+
+        const deleted = await RepresentativesAssignments.destroy({where: {id}});
+
+        if (deleted === 0) {
+            return res.status(404).json({message: 'Apoderado no encontrado.'});
+        }
+
+        res.status(200).json({message: 'Apoderado eliminado correctamente.'});
+    } catch (error) {
+        console.error('Error al eliminar apoderado: ', error.message);
+        res.status(500).json({message: 'Error al eliminar apoderado.'});
+    }
+}
+
+exports.getParentAssignmentByUser = async (req, res) => {
     try {
         const { userId } = req.params;
 

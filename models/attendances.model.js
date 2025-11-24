@@ -4,7 +4,7 @@ const StudentEnrollments = require('./studentEnrollments.model');
 const Schedules = require('../models/schedules.model');
 const TeachingDays = require('./schoolDays.model');
 
-const Assistances = sequelize.define('Assistances', {
+const Attendances = sequelize.define('Attendances', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -51,19 +51,19 @@ const Assistances = sequelize.define('Assistances', {
     timestamps: true
 });
 
-Assistances.belongsTo(StudentEnrollments, {
+Attendances.belongsTo(StudentEnrollments, {
     foreignKey: 'studentId',
     as: 'students'
 });
 
-Assistances.belongsTo(Schedules, {
+Attendances.belongsTo(Schedules, {
     foreignKey: 'scheduleId',
     as: 'schedules'
 });
 
-Assistances.belongsTo(TeachingDays, {
+Attendances.belongsTo(TeachingDays, {
     foreignKey: 'schoolDayId',
     as: 'schooldays'
 });
 
-module.exports = Assistances;
+module.exports = Attendances;

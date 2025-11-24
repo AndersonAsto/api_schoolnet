@@ -1,5 +1,5 @@
 const OverallCourseAverage = require('../models/overallCourseAverage.model');
-const TeachingBlockAvarage = require('../models/teachingBlockAvarage.model');
+const TeachingBlockAverage = require('../models/teachingBlockAverage.model');
 const StudentsEnrollments = require('../models/studentEnrollments.model');
 const Years = require('../models/years.model');
 const TeachingBlocks = require('../models/teachingBlocks.model');
@@ -9,7 +9,7 @@ const Grades = require('../models/grades.model');
 const Sections = require('../models/sections.model');
 const TeacherGroups = require('../models/teacherGroups.model');
 
-exports.calculateAnnualAverage = async (req, res) => {
+exports.calculateOverallCourseAverage = async (req, res) => {
     try {
         const {studentId, assignmentId, yearId} = req.body;
 
@@ -20,7 +20,7 @@ exports.calculateAnnualAverage = async (req, res) => {
         }
 
         // 🔹 Traer los promedios por bloque lectivo existentes
-        const blocks = await TeachingBlockAvarage.findAll({
+        const blocks = await TeachingBlockAverage.findAll({
             where: {studentId, assignmentId},
             include: [
                 {
@@ -93,7 +93,7 @@ exports.calculateAnnualAverage = async (req, res) => {
     }
 };
 
-exports.getGeneralAvarageByFilters = async (req, res) => {
+exports.getOverallCourseAverageByYearAndStudent = async (req, res) => {
     try {
         const {studentId, yearId} = req.query;
 
@@ -173,19 +173,19 @@ exports.getGeneralAvarageByFilters = async (req, res) => {
     }
 };
 
-exports.getGeneralAvarageBySYA = async (req, res) => {
+exports.getOverallCourseAverageByYearAndGroup = async (req, res) => {
     try {
-        const {studentId, yearId, assignmentId} = req.query;
+        const {yearId, assignmentId} = req.query;
 
-        if (!studentId || !yearId || !assignmentId) {
+        if (!yearId || !assignmentId) {
             return res.status(400).json({
                 status: false,
-                message: "Faltan parámetros requeridos (estudiante, año o asignación)."
+                message: "Faltan parámetros requeridos: studentId, yearId o assignmentId."
             });
         }
 
         const records = await OverallCourseAverage.findAll({
-            where: {studentId, yearId, assignmentId},
+            where: {yearId, assignmentId},
             include: [
                 {
                     model: StudentsEnrollments,
@@ -253,19 +253,19 @@ exports.getGeneralAvarageBySYA = async (req, res) => {
     }
 };
 
-exports.getGeneralAvarageByAssignment = async (req, res) => {
+exports.getOverallCourseAverageByYearGroupAndStudent = async (req, res) => {
     try {
-        const {yearId, assignmentId} = req.query;
+        const {studentId, yearId, assignmentId} = req.query;
 
-        if (!yearId || !assignmentId) {
+        if (!studentId || !yearId || !assignmentId) {
             return res.status(400).json({
                 status: false,
-                message: "Faltan parámetros requeridos: studentId, yearId o assignmentId."
+                message: "Faltan parámetros requeridos (estudiante, año o asignación)."
             });
         }
 
         const records = await OverallCourseAverage.findAll({
-            where: {yearId, assignmentId},
+            where: {studentId, yearId, assignmentId},
             include: [
                 {
                     model: StudentsEnrollments,

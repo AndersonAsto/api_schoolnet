@@ -1,5 +1,5 @@
 const {Op} = require("sequelize");
-const TeachingBlockAvarage = require("../models/teachingBlockAvarage.model");
+const TeachingBlockAvarage = require("../models/teachingBlockAverage.model");
 const Exams = require("../models/evaluations.model");
 const TeachingBlocks = require("../models/teachingBlocks.model");
 const Schedules = require("../models/schedules.model");
@@ -12,7 +12,7 @@ const Years = require("../models/years.model");
 const Qualifications = require("../models/qualifications.model");
 const TeacherGroups = require("../models/teacherGroups.model");
 
-exports.previewAverage = async (req, res) => {
+exports.previewTeachingBlockAverage = async (req, res) => {
     try {
         const {studentId, assignmentId, teachingBlockId} = req.body;
 
@@ -76,7 +76,7 @@ exports.previewAverage = async (req, res) => {
     }
 };
 
-exports.calculateAndSaveAverage = async (req, res) => {
+exports.calculateTeachingBlockAverage = async (req, res) => {
     try {
         const {studentId, assignmentId, teachingBlockId} = req.body;
 
@@ -158,7 +158,7 @@ exports.calculateAndSaveAverage = async (req, res) => {
     }
 };
 
-exports.getAveragesByStudent = async (req, res) => {
+exports.getTeachingBlockAverageByStudent = async (req, res) => {
     try {
         const {studentId} = req.params;
 
@@ -202,8 +202,7 @@ exports.getAveragesByStudent = async (req, res) => {
     }
 };
 
-// 📘 Obtener promedios por grupo docente
-exports.getAveragesByAssignment = async (req, res) => {
+exports.getTeachingBlockAverageByGroup = async (req, res) => {
     try {
         const {assignmentId} = req.params;
 
@@ -239,8 +238,7 @@ exports.getAveragesByAssignment = async (req, res) => {
     }
 };
 
-// 📘 Obtener promedios por bloque lectivo
-exports.getAveragesByBlock = async (req, res) => {
+exports.getTeachingBlockAverageByBlock = async (req, res) => {
     try {
         const {teachingBlockId} = req.params;
 
@@ -279,8 +277,7 @@ exports.getAveragesByBlock = async (req, res) => {
     }
 };
 
-// 📘 Obtener promedios por estudiante, año y grupo docente
-exports.getAveragesByStudentYearAssignment = async (req, res) => {
+exports.getTeachingBlockAverageByYearGroupAndStudent = async (req, res) => {
     try {
         const {studentId, yearId, assignmentId} = req.params;
 

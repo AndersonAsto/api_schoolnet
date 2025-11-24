@@ -43,44 +43,6 @@ exports.getPersons = async (req, res) => {
     }
 }
 
-exports.getPersonsByPrivilegien = async (req, res) => {
-    try {
-
-        const validRoles = ['Administrador', 'Docente', 'Apoderado'];
-
-        const persons = await Persons.findAll({
-            where: {
-                role: validRoles
-            },
-        });
-        res.json(persons);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener personas', error});
-    }
-}
-
-exports.getPersonsByRole = async (req, res) => {
-    try {
-
-        const {role} = req.params;
-
-        const validRoles = ['Administrador', 'Docente', 'Estudiante', 'Apoderado'];
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({message: 'Rol inválido'});
-        }
-
-        const persons = await Persons.findAll({
-            where: {role}
-        });
-        res.json(persons);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener personas por rol', error});
-    }
-};
-
 exports.updatePerson = async (req, res) => {
     const {id} = req.params;
     const {names, lastNames, dni, email, phone, role} = req.body;
@@ -138,5 +100,43 @@ exports.deletePersonById = async (req, res) => {
             message: 'Error al eliminar persona',
             error: error.message
         });
+    }
+};
+
+exports.getPersonsByPrivilege = async (req, res) => {
+    try {
+
+        const validRoles = ['Administrador', 'Docente', 'Apoderado'];
+
+        const persons = await Persons.findAll({
+            where: {
+                role: validRoles
+            },
+        });
+        res.json(persons);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: 'Error al obtener personas', error});
+    }
+}
+
+exports.getPersonsByRole = async (req, res) => {
+    try {
+
+        const {role} = req.params;
+
+        const validRoles = ['Administrador', 'Docente', 'Estudiante', 'Apoderado'];
+        if (!validRoles.includes(role)) {
+            return res.status(400).json({message: 'Rol inválido'});
+        }
+
+        const persons = await Persons.findAll({
+            where: {role}
+        });
+        res.json(persons);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message: 'Error al obtener personas por rol', error});
     }
 };

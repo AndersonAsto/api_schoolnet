@@ -4,46 +4,7 @@ const TeachingBlocks = require('../models/teachingBlocks.model');
 const TeacherGroups = require('../models/teacherGroups.model');
 const Persons = require('../models/persons.model');
 
-exports.getAllExams = async (req, res) => {
-    try {
-        const exams = await Exams.findAll({
-            include: [
-                {
-                    model: StudentsEnrollments,
-                    as: 'students',
-                    include: [
-                        {
-                            model: Persons,
-                            as: 'persons',
-                            attributes: ['id', 'names', 'lastNames']
-                        }
-                    ]
-                },
-                {
-                    model: TeacherGroups,
-                    as: 'assignments',
-                    attributes: ['id', 'courseId', 'sectionId', 'gradeId', 'teacherAssignmentId']
-                },
-                {
-                    model: TeachingBlocks,
-                    as: 'teachingblocks',
-                    attributes: ['id', 'teachingBlock', 'startDay', 'endDay']
-                }
-            ],
-            order: [
-                ['teachingBlockId', 'ASC'],
-                ['studentId', 'ASC']
-            ]
-        });
-
-        res.status(200).json(exams);
-    } catch (error) {
-        console.error('Error al obtener exámenes: ', error);
-        res.status(500).json({message: 'Error al obtener los exámenes: ', error});
-    }
-};
-
-exports.createExam = async (req, res) => {
+exports.createEvaluation = async (req, res) => {
     try {
         const {studentId, assigmentId, teachingBlockId, score, type} = req.body;
 
@@ -84,7 +45,92 @@ exports.createExam = async (req, res) => {
     }
 };
 
-exports.getExamsByStudentId = async (req, res) => {
+exports.getEvaluations = async (req, res) => {
+    try {
+        const exams = await Exams.findAll({
+            include: [
+                {
+                    model: StudentsEnrollments,
+                    as: 'students',
+                    include: [
+                        {
+                            model: Persons,
+                            as: 'persons',
+                            attributes: ['id', 'names', 'lastNames']
+                        }
+                    ]
+                },
+                {
+                    model: TeacherGroups,
+                    as: 'assignments',
+                    attributes: ['id', 'courseId', 'sectionId', 'gradeId', 'teacherAssignmentId']
+                },
+                {
+                    model: TeachingBlocks,
+                    as: 'teachingblocks',
+                    attributes: ['id', 'teachingBlock', 'startDay', 'endDay']
+                }
+            ],
+            order: [
+                ['teachingBlockId', 'ASC'],
+                ['studentId', 'ASC']
+            ]
+        });
+
+        res.status(200).json(exams);
+    } catch (error) {
+        console.error('Error al obtener exámenes: ', error);
+        res.status(500).json({message: 'Error al obtener los exámenes: ', error});
+    }
+};
+
+exports.updateEvaluation = async (req, res) => {
+    const {id} = req.params;
+    const {studentId, assigmentId, teachingBlockId, score, examDate, type} = req.body;
+    try {
+        const evaluations = await Exams.findByPk(id);
+
+        if (!evaluations) {
+            return res.status(404).json({message: 'Evaluación no encontrada.'});
+        }
+
+        evaluations.studentId = studentId;
+        evaluations.assigmentId = assigmentId;
+        evaluations.teachingBlockId = teachingBlockId;
+        evaluations.score = score;
+        evaluations.examDate = examDate;
+        evaluations.type = type;
+
+        await evaluations.save();
+        res.status(200).json(evaluations);
+    } catch (error) {
+        console.error('Error al actualizar evaluación: ', error.message);
+        res.status(500).json({message: 'Error al actualizar evaluación.'});
+    }
+}
+
+exports.deleteEvaluation = async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
+        }
+
+        const deleted = await Exams.destroy({where: {id}});
+
+        if (deleted === 0) {
+            return res.status(404).json({message: 'Evaluación no encontrada.'});
+        }
+
+        res.status(200).json({message: 'Evaluación eliminada correctamente.'});
+    } catch (error) {
+        console.error('Error al eliminar evaluación: ', error.message);
+        res.status(500).json({message: 'Error al eliminar evalución.'});
+    }
+}
+
+exports.getEvaluationsByStudent = async (req, res) => {
     try {
         const {studentId} = req.params;
 
@@ -131,7 +177,7 @@ exports.getExamsByStudentId = async (req, res) => {
     }
 };
 
-exports.getExamsByStudentAndGroup = async (req, res) => {
+exports.getEvaluationsByGroupAndStudent = async (req, res) => {
     try {
         const {studentId, assigmentId} = req.params;
 
@@ -198,7 +244,7 @@ exports.getExamsByStudentAndGroup = async (req, res) => {
     }
 };
 
-exports.getExamsByBlockAndGroup = async (req, res) => {
+exports.getEvaluationsByBlockAndGroup = async (req, res) => {
     try {
         const {teachingBlockId, assigmentId} = req.params;
 
@@ -264,49 +310,3 @@ exports.getExamsByBlockAndGroup = async (req, res) => {
         });
     }
 };
-
-exports.deleteExamsById = async (req, res) => {
-    try {
-        const {id} = req.params;
-
-        if (!id || isNaN(id)) {
-            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
-        }
-
-        const deleted = await Exams.destroy({where: {id}});
-
-        if (deleted === 0) {
-            return res.status(404).json({message: 'Evaluación no encontrada.'});
-        }
-
-        res.status(200).json({message: 'Evaluación eliminada correctamente.'});
-    } catch (error) {
-        console.error('Error al eliminar evaluación: ', error.message);
-        res.status(500).json({message: 'Error al eliminar evalución.'});
-    }
-}
-
-exports.updateEvaluation = async (req, res) => {
-    const {id} = req.params;
-    const {studentId, assigmentId, teachingBlockId, score, examDate, type} = req.body;
-    try {
-        const evaluations = await Exams.findByPk(id);
-
-        if (!evaluations) {
-            return res.status(404).json({message: 'Evaluación no encontrada.'});
-        }
-
-        evaluations.studentId = studentId;
-        evaluations.assigmentId = assigmentId;
-        evaluations.teachingBlockId = teachingBlockId;
-        evaluations.score = score;
-        evaluations.examDate = examDate;
-        evaluations.type = type;
-
-        await evaluations.save();
-        res.status(200).json(evaluations);
-    } catch (error) {
-        console.error('Error al actualizar evaluación: ', error.message);
-        res.status(500).json({message: 'Error al actualizar evaluación.'});
-    }
-}

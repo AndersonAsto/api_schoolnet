@@ -1,32 +1,31 @@
 const sequelize = require('../config/db.config');
-const Assistances = require('../models/assistances.model');
+const Attendances = require('../models/attendances.model');
 const StudentEnrollments = require('../models/studentEnrollments.model');
 const Schedules = require('../models/schedules.model');
-const TeachingDays = require('../models/schoolDays.model');
+const SchoolDays = require('../models/schoolDays.model');
 const Years = require('../models/years.model');
 const Persons = require('../models/persons.model');
 const {Op} = require('sequelize');
 const TeacherGroups = require('../models/teacherGroups.model');
-const StudentsEnrollments = require('../models/studentEnrollments.model');
 
-exports.createBulk = async (req, res) => {
+exports.bulkCreateAttendances = async (req, res) => {
     try {
-        const assistances = req.body; // Array de asistencias
-        if (!Array.isArray(assistances) || assistances.length === 0) {
+        const attendances = req.body;
+        if (!Array.isArray(attendances) || attendances.length === 0) {
             return res.status(400).json({message: 'No se enviaron asistencias.'});
         }
 
-        await Assistances.bulkCreate(assistances);
+        await Attendances.bulkCreate(attendances);
         res.status(201).json({message: 'Asistencias registradas correctamente.'});
     } catch (error) {
         console.error(error);
-        res.status(500).json({message: 'Error al guardar asistencias.', error});
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
-exports.getAssistances = async (req, res) => {
+exports.getAttendances = async (req, res) => {
     try {
-        const assistances = await Assistances.findAll({
+        const attendances = await Attendances.findAll({
             include: [
                 {
                     model: StudentEnrollments,
@@ -53,7 +52,7 @@ exports.getAssistances = async (req, res) => {
                     ],
                 },
                 {
-                    model: TeachingDays,
+                    model: SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay'],
                     include: [
@@ -67,35 +66,27 @@ exports.getAssistances = async (req, res) => {
             ],
             order: [['id', 'ASC']]
         });
-        res.json(assistances);
-
+        res.status(200).json(attendances);
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            status: false,
-            message: 'Error obteniendo asistencias'
-        });
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
-exports.bulkUpdateAssistances = async (req, res) => {
+exports.bulkUpdateAttendances = async (req, res) => {
     try {
-        const updates = req.body; // [{id, assistance, assistanceDetail, scheduleId, schoolDayId, studentId}, ...]
+        const updates = req.body;
 
         if (!Array.isArray(updates) || updates.length === 0) {
-            return res.status(400).json({status: false, message: "No hay datos para actualizar"});
+            return res.status(400).json({status: false, message: "No hay datos para actualizar."});
         }
-
-        // Usamos una transacción para seguridad
         const transaction = await sequelize.transaction();
-
         try {
             for (const record of updates) {
                 if (!record.id) {
                     throw new Error(`El registro no tiene ID: ${JSON.stringify(record)}`);
                 }
-
-                await Assistances.update(
+                await Attendances.update(
                     {
                         assistance: record.assistance,
                         assistanceDetail: record.assistanceDetail || null,
@@ -120,15 +111,11 @@ exports.bulkUpdateAssistances = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            status: false,
-            message: "Error actualizando asistencias",
-            error: error.message
-        });
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
-exports.getByScheduleAndDay = async (req, res) => {
+exports.getAttendancesByScheduleAndDay = async (req, res) => {
     try {
         const {scheduleId, schoolDayId} = req.query;
 
@@ -139,7 +126,7 @@ exports.getByScheduleAndDay = async (req, res) => {
             });
         }
 
-        const assistances = await Assistances.findAll({
+        const assistances = await Attendances.findAll({
             where: {
                 scheduleId: Number(scheduleId),
                 schoolDayId: Number(schoolDayId)
@@ -164,18 +151,15 @@ exports.getByScheduleAndDay = async (req, res) => {
         res.json(assistances);
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            status: false,
-            message: "Error obteniendo asistencias"
-        });
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
-exports.getByStudentAndSchedule = async (req, res) => {
+exports.getAttendancesByScheduleAndStudent = async (req, res) => {
     const {studentId, scheduleId} = req.params;
 
     try {
-        const assistances = await Assistances.findAll({
+        const assistances = await Attendances.findAll({
             where: {
                 studentId,
                 scheduleId
@@ -199,7 +183,7 @@ exports.getByStudentAndSchedule = async (req, res) => {
                     attributes: ['id', 'courseId', 'gradeId', 'sectionId', 'teacherId', 'weekday']
                 },
                 {
-                    model: TeachingDays,
+                    model: SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay']
                 }
@@ -213,12 +197,12 @@ exports.getByStudentAndSchedule = async (req, res) => {
 
         res.status(200).json(assistances);
     } catch (error) {
-        console.error("❌ Error obteniendo asistencias por estudiante:", error);
-        res.status(500).json({message: "Error obteniendo asistencias", error});
+        console.error("Error obteniendo asistencias por estudiante: ", error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
-exports.getAssistancesByGroupAndStudent = async (req, res) => {
+exports.getAttendancesByGroupAndStudent = async (req, res) => {
     try {
         const {teacherGroupId, studentId} = req.params;
 
@@ -246,7 +230,7 @@ exports.getAssistancesByGroupAndStudent = async (req, res) => {
         const scheduleIds = schedules.map(s => s.id);
 
         // 3️⃣ Buscar asistencias del estudiante en esos horarios
-        const assistances = await Assistances.findAll({
+        const assistances = await Attendances.findAll({
             where: {
                 studentId: studentId,
                 scheduleId: {[Op.in]: scheduleIds},
@@ -254,7 +238,7 @@ exports.getAssistancesByGroupAndStudent = async (req, res) => {
             },
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
@@ -271,7 +255,7 @@ exports.getAssistancesByGroupAndStudent = async (req, res) => {
                     attributes: ['id', 'courseId', 'gradeId', 'sectionId', 'teacherId', 'weekday']
                 },
                 {
-                    model: TeachingDays,
+                    model: SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay']
                 }
@@ -284,9 +268,6 @@ exports.getAssistancesByGroupAndStudent = async (req, res) => {
 
     } catch (error) {
         console.error('Error al obtener asistencias:', error);
-        return res.status(500).json({
-            message: 'Error al obtener asistencias',
-            error: error.message
-        });
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

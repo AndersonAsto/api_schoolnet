@@ -10,10 +10,10 @@ const Tutors = require('../models/tutors.model');
 exports.createStudentEnrollment = async (req, res) => {
     try {
 
-        const {studentId, yearId, gradeId, sectionId} = req.body;
+        const { studentId, yearId, gradeId, sectionId } = req.body;
 
         if (!studentId || !yearId || !gradeId || !sectionId)
-            return res.status(400).json({error: 'No ha completado algunos campos'});
+            return res.status(400).json({ error: 'No ha completado algunos campos' });
 
         const newStudentEnrollment = await StudentEnrollments.create({
             studentId, yearId, gradeId, sectionId
@@ -67,16 +67,16 @@ exports.getStudentEnrollments = async (req, res) => {
 
 exports.getStudentsBySchedule = async (req, res) => {
     try {
-        const {scheduleId} = req.params;
+        const { scheduleId } = req.params;
 
         if (!scheduleId) {
-            return res.status(400).json({message: "El identificador del horario es requerido"});
+            return res.status(400).json({ message: "El identificador del horario es requerido" });
         }
 
         // 🔹 Buscar el horario seleccionado
         const schedule = await Schedules.findByPk(scheduleId);
         if (!schedule) {
-            return res.status(404).json({message: "Horario no encontrado"});
+            return res.status(404).json({ message: "Horario no encontrado" });
         }
 
         // 🔹 Buscar estudiantes del mismo grado y sección (y opcionalmente mismo año)
@@ -109,7 +109,7 @@ exports.getStudentsBySchedule = async (req, res) => {
                     attributes: ["id", "year"],
                 },
             ],
-            order: [[{model: Persons, as: "persons"}, "lastNames", "ASC"]],
+            order: [[{ model: Persons, as: "persons" }, "lastNames", "ASC"]],
         });
 
         return res.status(200).json(students);
@@ -124,16 +124,16 @@ exports.getStudentsBySchedule = async (req, res) => {
 
 exports.getStudentsByGroup = async (req, res) => {
     try {
-        const {asigmentId} = req.params;
+        const { asigmentId } = req.params;
 
         if (!asigmentId) {
-            return res.status(400).json({message: "El identificador del grupo es requerido"});
+            return res.status(400).json({ message: "El identificador del grupo es requerido" });
         }
 
         // 🔹 Buscar el horario seleccionado
         const group = await TeacherGroups.findByPk(asigmentId);
         if (!group) {
-            return res.status(404).json({message: "Grupo no encontrado"});
+            return res.status(404).json({ message: "Grupo no encontrado" });
         }
 
         // 🔹 Buscar estudiantes del mismo grado y sección (y opcionalmente mismo año)
@@ -166,7 +166,7 @@ exports.getStudentsByGroup = async (req, res) => {
                     attributes: ["id", "year"],
                 },
             ],
-            order: [[{model: Persons, as: "persons"}, "lastNames", "ASC"]],
+            order: [[{ model: Persons, as: "persons" }, "lastNames", "ASC"]],
         });
 
         return res.status(200).json(students);
@@ -181,18 +181,30 @@ exports.getStudentsByGroup = async (req, res) => {
 
 exports.getStudentsByTutorGroup = async (req, res) => {
     try {
-        const { tutorId } = req.params;
-        if (!tutorId)
-            return res.status(400).json({ message: "El identificador del grupo de tutor es requerido." });
+        const { tutorId, yearId } = req.params;
 
-        const group = await Tutors.findByPk(tutorId);
-        if (!group) 
-            return res.status(404).json({ message: "Grupo de tutor no encontrado." });
-        
+        if (!tutorId || !yearId) {
+            return res.status(400).json({ message: "No ha seleccionado un año o tutor." });
+        }
+
+        // Buscamos el grupo de tutor para ese año específico
+        const group = await Tutors.findOne({
+            where: {
+                id: tutorId,
+                yearId: yearId,
+                status: true,
+            },
+        });
+
+        if (!group) {
+            return res.status(404).json({ message: "Grupo de tutor no encontrado para ese año." });
+        }
+
         const students = await StudentEnrollments.findAll({
             where: {
                 gradeId: group.gradeId,
                 sectionId: group.sectionId,
+                yearId: yearId, // <- usamos el parámetro yearId
                 status: true,
             },
             include: [
@@ -217,7 +229,7 @@ exports.getStudentsByTutorGroup = async (req, res) => {
                     attributes: ["id", "year"],
                 },
             ],
-            order: [[{model: Persons, as: "persons"}, "lastNames", "ASC"]],
+            order: [[{ model: Persons, as: "persons" }, "lastNames", "ASC"]],
         });
 
         return res.status(200).json(students);
@@ -225,37 +237,16 @@ exports.getStudentsByTutorGroup = async (req, res) => {
         console.error('Error al obtener datos de estudiantes por grupo de tutor: ', error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
-}
+};
 
-exports.deleteStudentById = async (req, res) => {
-    try {
-        const {id} = req.params;
-
-        if (!id || isNaN(id)) {
-            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
-        }
-
-        const deleted = await StudentEnrollments.destroy({where: {id}});
-
-        if (deleted === 0) {
-            return res.status(404).json({message: 'Estudiante no encontrado.'});
-        }
-
-        res.status(200).json({message: 'Estudiante eliminado correctamente.'});
-    } catch (error) {
-        console.error('Error al eliminar estudiante: ', error.message);
-        res.status(500).json({message: 'Error al eliminar estudiante.'});
-    }
-}
-
-exports.updatedStudent = async (req, res) => {
-    const {id} = req.params;
-    const {studentId, yearId, gradeId, sectionId} = req.body;
+exports.updateStudentEnrollment = async (req, res) => {
+    const { id } = req.params;
+    const { studentId, yearId, gradeId, sectionId } = req.body;
     try {
         const students = await StudentEnrollments.findByPk(id);
 
         if (!students) {
-            return res.status(404).json({message: 'Estudiante no encontrado.'});
+            return res.status(404).json({ message: 'Estudiante no encontrado.' });
         }
 
         students.studentId = studentId;
@@ -267,6 +258,27 @@ exports.updatedStudent = async (req, res) => {
         res.status(200).json(students);
     } catch (error) {
         console.error('Error al actualizar estudiante: ', error.message);
-        res.status(500).json({message: 'Error al actualizar estudiante.'});
+        res.status(500).json({ message: 'Error al actualizar estudiante.' });
+    }
+}
+
+exports.deleteStudentEnrollment = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+        }
+
+        const deleted = await StudentEnrollments.destroy({ where: { id } });
+
+        if (deleted === 0) {
+            return res.status(404).json({ message: 'Estudiante no encontrado.' });
+        }
+
+        res.status(200).json({ message: 'Estudiante eliminado correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar estudiante: ', error.message);
+        res.status(500).json({ message: 'Error al eliminar estudiante.' });
     }
 }

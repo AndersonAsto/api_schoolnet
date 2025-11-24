@@ -37,7 +37,7 @@ exports.createIncident = async (req, res) => {
     }
 };
 
-exports.getAllIncidents = async (req, res) => {
+exports.getIncidents = async (req, res) => {
     try {
         const incidents = await Incidents.findAll({
             include: [
@@ -95,7 +95,51 @@ exports.getAllIncidents = async (req, res) => {
     }
 };
 
-exports.getByStudentAndSchedule = async (req, res) => {
+exports.deleteIncident = async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
+        }
+
+        const deleted = await Incidents.destroy({where: {id}});
+
+        if (deleted === 0) {
+            return res.status(404).json({message: 'Incidencia no encontrada.'});
+        }
+
+        res.status(200).json({message: 'Incidencia eliminada correctamente.'});
+    } catch (error) {
+        console.error('Error al eliminar incidencia: ', error.message);
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+    }
+}
+
+exports.updateIncident = async (req, res) => {
+    const {id} = req.params;
+    const {studentId, scheduleId, schoolDayId, incidentDetail} = req.body;
+    try {
+        const incidents = await Incidents.findByPk(id);
+
+        if (!incidents) {
+            return res.status(404).json({message: 'Incidente no encontrado.'});
+        }
+
+        incidents.studentId = studentId;
+        incidents.scheduleId = scheduleId;
+        incidents.schoolDayId = schoolDayId;
+        incidents.incidentDetail = incidentDetail;
+
+        await incidents.save();
+        res.status(200).json(incidents);
+    } catch (error) {
+        console.error('Error al actualizar incidente: ', error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+    }
+}
+
+exports.getIncidentsByScheduleAndStudent = async (req, res) => {
     try {
         const {studentId, scheduleId} = req.params;
 
@@ -155,47 +199,3 @@ exports.getByStudentAndSchedule = async (req, res) => {
         res.status(500).json({message: 'Error obteniendo incidencias', error});
     }
 };
-
-exports.deleteIncidentById = async (req, res) => {
-    try {
-        const {id} = req.params;
-
-        if (!id || isNaN(id)) {
-            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
-        }
-
-        const deleted = await Incidents.destroy({where: {id}});
-
-        if (deleted === 0) {
-            return res.status(404).json({message: 'Incidencia no encontrada.'});
-        }
-
-        res.status(200).json({message: 'Incidencia eliminada correctamente.'});
-    } catch (error) {
-        console.error('Error al eliminar incidencia: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
-    }
-}
-
-exports.updateIncident = async (req, res) => {
-    const {id} = req.params;
-    const {studentId, scheduleId, schoolDayId, incidentDetail} = req.body;
-    try {
-        const incidents = await Incidents.findByPk(id);
-
-        if (!incidents) {
-            return res.status(404).json({message: 'Incidente no encontrado.'});
-        }
-
-        incidents.studentId = studentId;
-        incidents.scheduleId = scheduleId;
-        incidents.schoolDayId = schoolDayId;
-        incidents.incidentDetail = incidentDetail;
-
-        await incidents.save();
-        res.status(200).json(incidents);
-    } catch (error) {
-        console.error('Error al actualizar incidente: ', error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
-    }
-}

@@ -1,10 +1,10 @@
 const {DataTypes} = require('sequelize');
 const sequelize = require('../config/db.config');
 const TeachingBlocks = require('./teachingBlocks.model');
-const StudentsEnrollments = require('./studentEnrollments.model');
+const StudentEnrollments = require('./studentEnrollments.model');
 const TeacherGroups = require('./teacherGroups.model');
 
-const Exams = sequelize.define('Exams', {
+const Evaluations = sequelize.define('Evaluations', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -14,7 +14,7 @@ const Exams = sequelize.define('Exams', {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: StudentsEnrollments,
+            model: StudentEnrollments,
             key: 'id'
         }
     },
@@ -55,19 +55,19 @@ const Exams = sequelize.define('Exams', {
     timestamps: true
 });
 
-Exams.belongsTo(StudentsEnrollments, {
+Evaluations.belongsTo(StudentEnrollments, {
     foreignKey: 'studentId',
     as: 'students'
 });
 
-Exams.belongsTo(TeacherGroups, {
+Evaluations.belongsTo(TeacherGroups, {
     foreignKey: 'assigmentId',
     as: 'assignments'
 });
 
-Exams.belongsTo(TeachingBlocks, {
+Evaluations.belongsTo(TeachingBlocks, {
     foreignKey: 'teachingBlockId',
     as: 'teachingblocks'
 });
 
-module.exports = Exams;
+module.exports = Evaluations;

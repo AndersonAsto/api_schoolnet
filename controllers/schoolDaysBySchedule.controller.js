@@ -1,4 +1,4 @@
-const ScheduleSchoolDays = require('../models/scheduleSchoolDays.model');
+const ScheduleSchoolDays = require('../models/schoolDaysBySchedule.model');
 const TeachingBlocks = require('../models/teachingBlocks.model');
 const SchoolDays = require('../models/schoolDays.model');
 const Schedules = require('../models/schedules.model');
@@ -7,7 +7,7 @@ const {Op} = require('sequelize');
 const Users = require('../models/users.model');
 const Years = require('../models/years.model');
 
-exports.generateScheduleDays = async (req, res) => {
+exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
     const {yearId, scheduleId} = req.body;
 
     if (!yearId || !scheduleId) {
@@ -92,7 +92,7 @@ exports.generateScheduleDays = async (req, res) => {
     }
 };
 
-exports.getScheduleDays = async (req, res) => {
+exports.getSchoolDaysBySchedule = async (req, res) => {
     const {yearId, scheduleId} = req.query;
 
     try {
@@ -116,7 +116,7 @@ exports.getScheduleDays = async (req, res) => {
     }
 };
 
-exports.generateTeacherScheduleDays = async (req, res) => {
+exports.bulkCreateSchoolDaysByYearAndTeacher = async (req, res) => {
     const {yearId, teacherId} = req.body;
 
     if (!yearId || !teacherId) {

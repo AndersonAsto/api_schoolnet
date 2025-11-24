@@ -48,7 +48,7 @@ exports.updateYear = async (req, res) => {
     }
 }
 
-exports.deteleYearById = async (req, res) => {
+exports.deleteYear = async (req, res) => {
     try {
         const {id} = req.params;
         const deleted = await Years.destroy({where: {id}});

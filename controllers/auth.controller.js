@@ -6,7 +6,6 @@ const TeacherAssignments = require('../models/teacherAssignments.model');
 const Tutors = require('../models/tutors.model');
 const Users = require('../models/users.model');
 
-// 🔐 LOGIN
 exports.login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
@@ -14,7 +13,7 @@ exports.login = async (req, res, next) => {
       return res.status(400).json({ error: "Faltan credenciales" });
     }
 
-    // 👇 AQUI: asegúrate de traer personId
+    // Enviar personId
     const user = await Users.findOne({
       where: { userName: username, status: true },
       attributes: ["id", "userName", "passwordHash", "role", "personId"],
@@ -31,14 +30,12 @@ exports.login = async (req, res, next) => {
       return res.status(401).json({ error: "Usuario o contraseña inválidos" });
     }
 
-    // ==========================
-    // Lógica docente / tutor
-    // ==========================
+    // Docente - Tutor
     let isTeacher = false;
     let isTutor = false;
     let tutorId = null;
 
-    // ⚠️ Solo buscamos si tenemos personId
+    // Buscamos en función a personId
     if (user.personId) {
       const teacherAssignment = await TeacherAssignments.findOne({
         where: {
@@ -92,7 +89,6 @@ exports.login = async (req, res, next) => {
   }
 };
 
-// 🔄 REFRESH TOKEN
 exports.refresh = async (req, res) => {
     const {refreshToken} = req.body;
     if (!refreshToken) {
@@ -118,7 +114,6 @@ exports.refresh = async (req, res) => {
     }
 };
 
-// 🚪 LOGOUT
 exports.logout = (req, res) => {
     const auth = req.headers["authorization"];
     if (!auth) return res.status(200).json({ok: true});
@@ -127,9 +122,7 @@ exports.logout = (req, res) => {
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET, {issuer: process.env.JWT_ISS});
         tokenBlacklist.add(payload.jti, payload.exp);
-    } catch (_) {
-        // Si ya está inválido, da igual
-    }
+    } catch (_) {}
 
     return res.json({ok: true});
 };

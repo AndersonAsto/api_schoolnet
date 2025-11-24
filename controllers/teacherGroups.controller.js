@@ -76,7 +76,7 @@ exports.getTeacherGroups = async (req, res) => {
     }
 }
 
-exports.getGroupsByUserYear = async (req, res) => {
+exports.getTeacherGroupsByYearAndUser = async (req, res) => {
     try {
         const {userId, yearId} = req.params;
 
@@ -162,7 +162,7 @@ exports.getGroupsByUserYear = async (req, res) => {
     }
 }
 
-exports.getTeacherGroupsByGradeAndSection = async (req, res) => {
+exports.getTeacherGroupsByYearAndTutor = async (req, res) => {
     try {
         const { yearId, tutorId } = req.params;
 

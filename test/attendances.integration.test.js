@@ -1,6 +1,6 @@
 const request = require('supertest');
 const express = require('express');
-const router = require('../routes/assistances.routes'); // Importa tus rutas reales
+const router = require('../routes/attendances.routes'); // Importa tus rutas reales
 
 const app = express();
 app.use(express.json());

@@ -1,9 +1,9 @@
 const TeacherAssignments = require('../models/teacherAssignments.model');
 const Persons = require('../models/persons.model');
 const Years = require('../models/years.model');
-const Couses = require('../models/courses.model');
+const Courses = require('../models/courses.model');
 
-exports.createTeacherAssignament = async (req, res) => {
+exports.createTeacherAssignment = async (req, res) => {
     try {
 
         const {personId, yearId, courseId} = req.body;
@@ -20,7 +20,7 @@ exports.createTeacherAssignament = async (req, res) => {
     }
 }
 
-exports.getTeacherAssignaments = async (req, res) => {
+exports.getTeacherAssignments = async (req, res) => {
     try {
         const teacherAssignments = await TeacherAssignments.findAll({
             include: [
@@ -35,7 +35,7 @@ exports.getTeacherAssignaments = async (req, res) => {
                     attributes: ['id', 'year']
                 },
                 {
-                    model: Couses,
+                    model: Courses,
                     as: 'courses',
                     attributes: ['id', 'course']
                 }
@@ -50,28 +50,7 @@ exports.getTeacherAssignaments = async (req, res) => {
     }
 }
 
-exports.deleteTeacherById = async (req, res) => {
-    try {
-        const {id} = req.params;
-
-        if (!id || isNaN(id)) {
-            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
-        }
-
-        const deleted = await TeacherAssignments.destroy({where: {id}});
-
-        if (deleted === 0) {
-            return res.status(404).json({message: 'Docente no encontrado.'});
-        }
-
-        res.status(200).json({message: 'Docente eliminado correctamente.'});
-    } catch (error) {
-        console.error('Error al eliminar docente: ', error.message);
-        res.status(500).json({message: 'Error al eliminar docente.'});
-    }
-}
-
-exports.updateTeacher = async (req, res) => {
+exports.updateTeacherAssignment = async (req, res) => {
     const {id} = req.params;
     const {personId, yearId, courseId} = req.body;
     try {
@@ -90,5 +69,26 @@ exports.updateTeacher = async (req, res) => {
     } catch (error) {
         console.error('Error al actualizar docente: ', error.message);
         res.status(500).json({message: 'Error al actualizar docente.'});
+    }
+}
+
+exports.deleteTeacherAssignment = async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
+        }
+
+        const deleted = await TeacherAssignments.destroy({where: {id}});
+
+        if (deleted === 0) {
+            return res.status(404).json({message: 'Docente no encontrado.'});
+        }
+
+        res.status(200).json({message: 'Docente eliminado correctamente.'});
+    } catch (error) {
+        console.error('Error al eliminar docente: ', error.message);
+        res.status(500).json({message: 'Error al eliminar docente.'});
     }
 }

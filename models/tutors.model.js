@@ -3,6 +3,7 @@ const sequelize = require('../config/db.config');
 const TeacherAssignments = require("./teacherAssignments.model");
 const Grades = require('./grades.model');
 const Sections = require('./sections.model');
+const Years = require('./years.model');
 
 const Tutors = sequelize.define('Tutors', {
     id: {
@@ -35,6 +36,14 @@ const Tutors = sequelize.define('Tutors', {
             key: 'id'
         }
     },
+    yearId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: Years,
+            key: 'id'
+        }
+    },
     status: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
@@ -60,6 +69,11 @@ Tutors.belongsTo(Sections, {
     foreignKey: 'sectionId',
     as: 'sections',
     onDelete: 'CASCADE'
+})
+
+Tutors.belongsTo(Years, {
+    foreignKey: 'yearId',
+    as: 'years'
 })
 
 module.exports = Tutors;

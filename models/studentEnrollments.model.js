@@ -5,7 +5,7 @@ const Years = require('./years.model');
 const Grades = require('./grades.model');
 const Sections = require('./sections.model');
 
-const StudentsEnrollments = sequelize.define('StudentsEnrollments', {
+const StudentEnrollments = sequelize.define('StudentsEnrollments', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -52,24 +52,24 @@ const StudentsEnrollments = sequelize.define('StudentsEnrollments', {
     timestamps: true
 });
 
-StudentsEnrollments.belongsTo(Persons, {
+StudentEnrollments.belongsTo(Persons, {
     foreignKey: 'studentId',
     as: 'persons'
 });
 
-StudentsEnrollments.belongsTo(Years, {
+StudentEnrollments.belongsTo(Years, {
     foreignKey: 'yearId',
     as: 'years'
 });
 
-StudentsEnrollments.belongsTo(Grades, {
+StudentEnrollments.belongsTo(Grades, {
     foreignKey: 'gradeId',
     as: 'grades'
 });
 
-StudentsEnrollments.belongsTo(Sections, {
+StudentEnrollments.belongsTo(Sections, {
     foreignKey: 'sectionId',
     as: 'sections'
 })
 
-module.exports = StudentsEnrollments;
+module.exports = StudentEnrollments;

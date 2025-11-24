@@ -96,6 +96,54 @@ exports.getSchedules = async (req, res) => {
     }
 }
 
+exports.updateSchedule = async (req, res) => {
+    const {id} = req.params;
+    const {yearId, teacherId, courseId, gradeId, sectionId, weekday, startTime, endTime} = req.body;
+    try {
+        const schedules = await Schedules.findByPk(id);
+
+        if (!schedules) {
+            return res.status(404).json({message: 'Horario no encontrado.'});
+        }
+
+        schedules.yearId = yearId;
+        schedules.teacherId = teacherId;
+        schedules.courseId = courseId;
+        schedules.gradeId = gradeId;
+        schedules.sectionId = sectionId;
+        schedules.weekday = weekday;
+        schedules.startTime = startTime;
+        schedules.endTime = endTime;
+
+        await schedules.save();
+        res.status(200).json(schedules);
+    } catch (error) {
+        console.error('Error al actualizar horario: ', error.message);
+        res.status(500).json({ message: 'Error al actualizar horario.' });
+    }
+}
+
+exports.deleteSchedule = async (req, res) => {
+    try {
+        const {id} = req.params;
+
+        if (!id || isNaN(id)) {
+            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
+        }
+
+        const deleted = await Schedules.destroy({where: {id}});
+
+        if (deleted === 0) {
+            return res.status(404).json({message: 'Horario no encontrado.'});
+        }
+
+        res.status(200).json({message: 'Horario eliminado correctamente.'});
+    } catch (error) {
+        console.error('Error al eliminar horario: ', error.message);
+        res.status(500).json({message: 'Error al eliminar horario.'});
+    }
+}
+
 exports.getSchedulesByUser = async (req, res) => {
     try {
         const {userId} = req.params;
@@ -183,7 +231,7 @@ exports.getSchedulesByUser = async (req, res) => {
     }
 };
 
-exports.getSchedulesByUserAndYear = async (req, res) => {
+exports.getSchedulesByYearAndUser = async (req, res) => {
     try {
         const {userId, yearId} = req.params;
 
@@ -343,54 +391,6 @@ exports.getSchedulesByTeacher = async (req, res) => {
         res.status(500).json({
             message: 'Error al obtener horarios:', error
         })
-    }
-}
-
-exports.deleteScheduleById = async (req, res) => {
-    try {
-        const {id} = req.params;
-
-        if (!id || isNaN(id)) {
-            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
-        }
-
-        const deleted = await Schedules.destroy({where: {id}});
-
-        if (deleted === 0) {
-            return res.status(404).json({message: 'Horario no encontrado.'});
-        }
-
-        res.status(200).json({message: 'Horario eliminado correctamente.'});
-    } catch (error) {
-        console.error('Error al eliminar horario: ', error.message);
-        res.status(500).json({message: 'Error al eliminar horario.'});
-    }
-}
-
-exports.updateSchedule = async (req, res) => {
-    const {id} = req.params;
-    const {yearId, teacherId, courseId, gradeId, sectionId, weekday, startTime, endTime} = req.body;
-    try {
-        const schedules = await Schedules.findByPk(id);
-
-        if (!schedules) {
-            return res.status(404).json({message: 'Horario no encontrado.'});
-        }
-
-        schedules.yearId = yearId;
-        schedules.teacherId = teacherId;
-        schedules.courseId = courseId;
-        schedules.gradeId = gradeId;
-        schedules.sectionId = sectionId;
-        schedules.weekday = weekday;
-        schedules.startTime = startTime;
-        schedules.endTime = endTime;
-
-        await schedules.save();
-        res.status(200).json(schedules);
-    } catch (error) {
-        console.error('Error al actualizar horario: ', error.message);
-        res.status(500).json({ message: 'Error al actualizar horario.' });
     }
 }
 

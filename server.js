@@ -24,7 +24,7 @@ const teachersAssignmentsRoutes = require('./routes/teacherAssignments.routes');
 const studentEnrollmentsRoutes = require('./routes/studentEnrollments.routes');
 const representativeAssignments = require('./routes/parentAssignments.routes');
 const schedulesRoutes = require('./routes/schedules.routes');
-const assistanceRoutes = require('./routes/assistances.routes');
+const assistanceRoutes = require('./routes/attendances.routes');
 const authRoutes = require('./routes/auth.routes');
 const qualificationRoutes = require('./routes/qualifications.routes');
 const examsRoutes = require('./routes/evaluations.routes');
@@ -32,10 +32,11 @@ const tBAveragesRoutes = require('./routes/teachingBlockAverage.route');
 const generalAverage = require('./routes/overallCourseAverage.routes');
 const incidentsRoutes = require('./routes/incidents.route');
 const errorHandler = require('./middlewares/error.middleware');
-const scheduleSchoolDaysRoutes = require('./routes/scheduleSchoolDays.routes');
+const scheduleSchoolDaysRoutes = require('./routes/schoolDaysBySchedule.routes');
 const teacherGroupsRoutes = require('./routes/teacherGroups.routes');
-const annualAverageRoutes = require('./routes/annualAverages.routes');
-const tutorsRoutes = require('./routes/tutor.routes');
+const annualAverageRoutes = require('./routes/annualAverage.routes');
+const tutorsRoutes = require('./routes/tutors.routes');
+const reportRoutes = require('./routes/reports.routes');
 
 const corsOptions = {
     origin: (origin, callback) => {
@@ -51,7 +52,7 @@ const corsOptions = {
 
         return callback(new Error('No autorizado por CORS.'));
     },
-
+    exposedHeaders: ['Content-Disposition'],
     credentials: true,
 };
 
@@ -93,6 +94,7 @@ app.use('/api', scheduleSchoolDaysRoutes);
 app.use('/api', teacherGroupsRoutes);
 app.use('/api', annualAverageRoutes);
 app.use('/api', tutorsRoutes);
+app.use('/api', reportRoutes);
 
 app.get('/', (req, res) => {
     res.send('Bienvenido')

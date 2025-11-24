@@ -52,7 +52,7 @@ exports.updateSection = async (req, res) => {
     }
 }
 
-exports.deleteSectionById = async (req, res) => {
+exports.deleteSection = async (req, res) => {
     try {
         const {id} = req.params;
 

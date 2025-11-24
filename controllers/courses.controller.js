@@ -52,7 +52,7 @@ exports.updateCourse = async (req, res) => {
     }
 }
 
-exports.deleteCourseById = async (req, res) => {
+exports.deleteCourse = async (req, res) => {
     try {
         const {id} = req.params;
         const deleted = await Courses.destroy({where: {id}});

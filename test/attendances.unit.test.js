@@ -1,7 +1,7 @@
-const {createBulk} = require('../controllers/assistances.controller');
-const Assistances = require('../models/assistances.model');
+const {createBulk} = require('../controllers/attendances.controller');
+const Assistances = require('../models/attendances.model');
 
-jest.mock('../models/assistances.model');
+jest.mock('../models/attendances.model');
 
 describe('Pruebas Unitarias - createBulk', () => {
 

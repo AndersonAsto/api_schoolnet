@@ -4,7 +4,7 @@ const StudentEnrollments = require('./studentEnrollments.model');
 const Persons = require('./persons.model');
 const Years = require('./years.model');
 
-const RepresentativesAssignments = sequelize.define('RepresentativesAssignments', {
+const ParentAssignments = sequelize.define('RepresentativesAssignments', {
     id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
@@ -47,19 +47,19 @@ const RepresentativesAssignments = sequelize.define('RepresentativesAssignments'
     tableName: 'representativesassignments'
 });
 
-RepresentativesAssignments.belongsTo(StudentEnrollments, {
+ParentAssignments.belongsTo(StudentEnrollments, {
     foreignKey: 'studentId',
     as: 'students'
 });
 
-RepresentativesAssignments.belongsTo(Persons, {
+ParentAssignments.belongsTo(Persons, {
     foreignKey: 'personId',
     as: 'persons'
 });
 
-RepresentativesAssignments.belongsTo(Years, {
+ParentAssignments.belongsTo(Years, {
     foreignKey: 'yearId',
     as: 'years'
 });
 
-module.exports = RepresentativesAssignments;
+module.exports = ParentAssignments;

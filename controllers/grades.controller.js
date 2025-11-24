@@ -52,7 +52,7 @@ exports.updateGrade = async (req, res) => {
     }
 }
 
-exports.deleteGradeById = async (req, res) => {
+exports.deleteGrade = async (req, res) => {
     try {
         const {id} = req.params;
 
