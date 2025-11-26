@@ -15,7 +15,7 @@ exports.createHoliday = async (req, res) => {
         res.status(201).json(newHoliday);
 
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -33,8 +33,8 @@ exports.getHolidays = async (req, res) => {
         res.status(200).json(holidays);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener días feriados', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -54,8 +54,8 @@ exports.updateHoliday = async (req, res) => {
 
         res.status(200).json(holy_days);
     } catch (error) {
-        console.error('Error al actualizar día feriado: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -75,8 +75,8 @@ exports.deleteHoliday = async (req, res) => {
 
         res.status(200).json({message: 'Día feriado eliminado correctamente.'});
     } catch (error) {
-        console.error('Error al eliminar día feriado: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -90,7 +90,7 @@ exports.getHolidaysByYear = async (req, res) => {
         res.status(200).json(holidays);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener días feriados'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

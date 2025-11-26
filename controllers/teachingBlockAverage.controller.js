@@ -65,14 +65,14 @@ exports.previewTeachingBlockAverage = async (req, res) => {
 
         const teachingBlockAvarage = (dailyAvarage * 0.3 + practiceAvarage * 0.3 + examAvarage * 0.4).toFixed(2);
 
-        // ✅ Solo devolver, sin guardar
+        // Solo devolver, sin guardar
         return res.status(200).json({
-            message: '✅ Vista previa generada correctamente',
+            message: 'Vista previa generada correctamente',
             data: {dailyAvarage, practiceAvarage, examAvarage, teachingBlockAvarage},
         });
     } catch (error) {
-        console.error('❌ Error al calcular promedio (preview):', error);
-        return res.status(500).json({message: 'Error interno del servidor', error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -121,7 +121,7 @@ exports.calculateTeachingBlockAverage = async (req, res) => {
 
         const teachingBlockAvarage = (dailyAvarage * 0.3 + practiceAvarage * 0.3 + examAvarage * 0.4).toFixed(2);
 
-        // ✅ Buscar si ya existe registro
+        // Buscar si ya existe registro
         const existing = await TeachingBlockAvarage.findOne({
             where: {studentId, assignmentId, teachingBlockId},
         });
@@ -149,12 +149,12 @@ exports.calculateTeachingBlockAverage = async (req, res) => {
         }
 
         return res.status(200).json({
-            message: existing ? '✅ Promedio actualizado correctamente' : '✅ Promedio creado correctamente',
+            message: existing ? 'Promedio actualizado correctamente' : 'Promedio creado correctamente',
             data: {dailyAvarage, practiceAvarage, examAvarage, teachingBlockAvarage},
         });
     } catch (error) {
-        console.error('❌ Error al guardar promedio:', error);
-        return res.status(500).json({message: 'Error interno del servidor', error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -197,8 +197,8 @@ exports.getTeachingBlockAverageByStudent = async (req, res) => {
 
         res.status(200).json(averages);
     } catch (error) {
-        console.error("❌ Error al obtener promedios del estudiante:", error);
-        res.status(500).json({message: "Error al obtener promedios del estudiante.", error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -227,14 +227,13 @@ exports.getTeachingBlockAverageByGroup = async (req, res) => {
             ],
         });
 
-        if (!averages.length) {
+        if (!averages.length)
             return res.status(404).json({message: "No se encontraron promedios de bloque lectivo para este grupo docente."});
-        }
 
         res.status(200).json(averages);
     } catch (error) {
-        console.error("❌ Error al obtener promedios por grupo docente:", error);
-        res.status(500).json({message: "Error al obtener promedios por grupo docente.", error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -272,8 +271,8 @@ exports.getTeachingBlockAverageByBlock = async (req, res) => {
 
         res.status(200).json(averages);
     } catch (error) {
-        console.error("❌ Error al obtener promedios por bloque lectivo:", error);
-        res.status(500).json({message: "Error al obtener promedios por bloque lectivo.", error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -322,7 +321,7 @@ exports.getTeachingBlockAverageByYearGroupAndStudent = async (req, res) => {
 
         res.status(200).json(averages);
     } catch (error) {
-        console.error("❌ Error al obtener promedios del estudiante:", error);
-        res.status(500).json({message: "Error al obtener promedios del estudiante.", error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

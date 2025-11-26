@@ -3,17 +3,10 @@ const Users = require('../models/users.model');
 
 exports.createUser = async (req, res) => {
     try {
-
-        const {
-            personId,
-            userName,
-            passwordHash,
-            role,
-            chargeDetail
-        } = req.body;
+        const {personId, userName, passwordHash, role, chargeDetail} = req.body;
 
         if (!personId || !userName || !passwordHash || !role)
-            return res.status(400).json({error: 'No ha completado algunos campos'});
+            return res.status(400).json({error: 'No ha completado los campos requeridos.'});
 
         const newUser = await Users.create({
             personId,
@@ -22,21 +15,18 @@ exports.createUser = async (req, res) => {
             role,
             chargeDetail
         });
-
         const userResponse = newUser.toJSON();
         delete userResponse.passwordHash;
 
         res.status(201).json(userResponse);
-
     } catch (error) {
-        console.error('Error de creación: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
 exports.getUsers = async (req, res) => {
     try {
-
         const users = await Users.findAll({
             include: {
                 model: Persons,
@@ -46,22 +36,18 @@ exports.getUsers = async (req, res) => {
             attributes: ['id', 'userName', 'passwordHash', 'role', 'chargeDetail', 'status', 'createdAt', 'updatedAt']
         });
         res.status(200).json(users);
-
     } catch (error) {
-        console.error('Error de obtención de datos: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
 exports.getUsersByRole = async (req, res) => {
     try {
-
         const {role} = req.params;
-
         const validRoles = ['Administrador', 'Docente', 'Apoderado'];
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({message: 'Rol inválido'});
-        }
+        if (!validRoles.includes(role))
+            return res.status(400).json({message: 'Rol inválido.'});
 
         const persons = await Users.findAll({
             where: {role},
@@ -72,11 +58,10 @@ exports.getUsersByRole = async (req, res) => {
             },
             attributes: ['id', 'userName', 'passwordHash', 'role', 'chargeDetail', 'status', 'createdAt', 'updatedAt']
         });
-        res.json(persons);
-
+        res.status(200).json(persons);
     } catch (error) {
-        console.error('Error de actualización: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -85,7 +70,6 @@ exports.updateUser = async (req, res) => {
     const {personId, userName, role, chargeDetail} = req.body;
 
     try {
-
         const users = await Users.findByPk(id);
 
         if (!users)
@@ -99,10 +83,11 @@ exports.updateUser = async (req, res) => {
 
         const userResponse = users.toJSON();
         delete userResponse.passwordHash;
+
         res.status(200).json(userResponse);
     } catch (error) {
-        console.error('Error de actualización: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -117,11 +102,7 @@ exports.deleteStudentById = async (req, res) => {
             res.status(404).json({message: 'Usuario no encontrado.'});
 
     } catch (error) {
-        console.error('Error de eliminación: ', error.message);
-
-        if (error.name === 'SequelizeForeignKeyConstraintError')
-            return res.status(409).json({ message: 'No se puede eliminar el usuario, tiene dependencias asociadas.' });
-
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

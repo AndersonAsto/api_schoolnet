@@ -21,10 +21,8 @@ exports.createStudentEnrollment = async (req, res) => {
         res.status(201).json(newStudentEnrollment);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al crear inscipción de estudiante: ', error
-        });
+       console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -58,10 +56,8 @@ exports.getStudentEnrollments = async (req, res) => {
         res.json(studentEnrollments);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al obtener incripciones de estudiantes', error
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -73,13 +69,13 @@ exports.getStudentsBySchedule = async (req, res) => {
             return res.status(400).json({ message: "El identificador del horario es requerido" });
         }
 
-        // 🔹 Buscar el horario seleccionado
+        // Buscar el horario seleccionado
         const schedule = await Schedules.findByPk(scheduleId);
         if (!schedule) {
             return res.status(404).json({ message: "Horario no encontrado" });
         }
 
-        // 🔹 Buscar estudiantes del mismo grado y sección (y opcionalmente mismo año)
+        // Buscar estudiantes del mismo grado y sección (y opcionalmente mismo año)
         const students = await StudentEnrollments.findAll({
             where: {
                 gradeId: schedule.gradeId,
@@ -114,11 +110,8 @@ exports.getStudentsBySchedule = async (req, res) => {
 
         return res.status(200).json(students);
     } catch (error) {
-        console.error("Error en getStudentsBySchedule:", error);
-        return res.status(500).json({
-            message: "Error al obtener los estudiantes por horario",
-            error: error.message,
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -130,13 +123,13 @@ exports.getStudentsByGroup = async (req, res) => {
             return res.status(400).json({ message: "El identificador del grupo es requerido" });
         }
 
-        // 🔹 Buscar el horario seleccionado
+        // Buscar el horario seleccionado
         const group = await TeacherGroups.findByPk(asigmentId);
         if (!group) {
             return res.status(404).json({ message: "Grupo no encontrado" });
         }
 
-        // 🔹 Buscar estudiantes del mismo grado y sección (y opcionalmente mismo año)
+        // Buscar estudiantes del mismo grado y sección (y opcionalmente mismo año)
         const students = await StudentEnrollments.findAll({
             where: {
                 gradeId: group.gradeId,
@@ -171,11 +164,8 @@ exports.getStudentsByGroup = async (req, res) => {
 
         return res.status(200).json(students);
     } catch (error) {
-        console.error("Error en getStudentsBySchedule:", error);
-        return res.status(500).json({
-            message: "Error al obtener los estudiantes por horario",
-            error: error.message,
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -234,7 +224,7 @@ exports.getStudentsByTutorGroup = async (req, res) => {
 
         return res.status(200).json(students);
     } catch (error) {
-        console.error('Error al obtener datos de estudiantes por grupo de tutor: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
@@ -257,8 +247,8 @@ exports.updateStudentEnrollment = async (req, res) => {
         await students.save();
         res.status(200).json(students);
     } catch (error) {
-        console.error('Error al actualizar estudiante: ', error.message);
-        res.status(500).json({ message: 'Error al actualizar estudiante.' });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -278,7 +268,7 @@ exports.deleteStudentEnrollment = async (req, res) => {
 
         res.status(200).json({ message: 'Estudiante eliminado correctamente.' });
     } catch (error) {
-        console.error('Error al eliminar estudiante: ', error.message);
-        res.status(500).json({ message: 'Error al eliminar estudiante.' });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

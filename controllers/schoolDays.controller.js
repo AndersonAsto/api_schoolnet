@@ -51,8 +51,8 @@ exports.bulkCreateSchoolDays = async (req, res) => {
         res.status(201).json({message: 'Días lectivos registrados correctamente.'});
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al registrar días lectivos.', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -69,8 +69,8 @@ exports.getSchoolDays = async (req, res) => {
         res.status(200).json(schoolDays);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener dias lectivos', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -92,7 +92,7 @@ exports.getSchoolDaysByYear = async (req, res) => {
         res.status(200).json(days);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error interno al obtener dias lectivos', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

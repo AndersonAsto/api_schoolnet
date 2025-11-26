@@ -12,13 +12,12 @@ exports.createTutor = async (req, res) => {
         const { teacherId, gradeId, sectionId } = req.body;
 
         if (!teacherId || !gradeId || !sectionId)
-            return res.status(400).json({ message: 'No se han completado los campos requeridos (docente, grado o sección). '});
-
+            return res.status(400).json({ message: 'No ha completado los campos requeridos (docente, grado o sección). '});
+        
         const newTutor = await Tutors.create({ teacherId, gradeId, sectionId });
-
         res.status(201).json(newTutor);
     } catch (error) {
-        console.error('Error al crear tutor: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -63,7 +62,7 @@ exports.getTutors = async (req, res) => {
         });
         res.status(200).json(tutors);
     } catch (error) {
-        console.error('Error al obtener datos de tutores: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -118,7 +117,7 @@ exports.getTutorByStudent = async (req, res) => {
         });
         res.status(200).json(tutorByStudent);
     } catch (error) {
-        console.error('Error al obtener datos de tutor por estudiante: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -165,7 +164,7 @@ exports.getTutorsById = async (req, res) => {
         });
         res.status(200).json(tutors);
     } catch (error) {
-        console.error('Error al obtener datos de tutor por identificador: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -186,7 +185,7 @@ exports.updateTutor = async (req, res) => {
         await tutors.save();
         res.status(200).json(tutors);
     } catch (error) {
-        console.error('Error al actualizar datos de tutor: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -205,7 +204,7 @@ exports.deleteTutor = async (req, res) => {
 
         res.status(200).json({ message: 'Tutor eliminado correctamente.' });
     } catch (error) {
-        console.error('Error al eliminar datos de tutor: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -213,7 +212,6 @@ exports.deleteTutor = async (req, res) => {
 exports.getTutorsByYear = async (req, res) => {
     try {
         const { yearId } = req.params;
-
         if (!yearId)
             res.status(404).json('No ha seleccioando un año.');
 
@@ -256,7 +254,7 @@ exports.getTutorsByYear = async (req, res) => {
         });
         res.status(200).json(tutors);
     } catch (error) {
-        console.error('Error al obtener datos de tutores: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

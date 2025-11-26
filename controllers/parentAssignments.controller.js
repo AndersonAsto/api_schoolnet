@@ -18,10 +18,8 @@ exports.createParentAssignment = async (req, res) => {
         res.status(201).json(newRepresentativesAssignments);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'No se ha podido crear asignación de apoderado: ', error
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -56,10 +54,8 @@ exports.getParentAssignments = async (req, res) => {
         });
         res.json(representativesAssignments);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al obtener asignaciones de apoderados:', error
-        })
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -81,8 +77,8 @@ exports.updateParentAssignment = async (req, res) => {
         await parents.save();
         res.status(200).json(parents);
     } catch (error) {
-        console.error('Error al actualizar apoderado: ', error.message);
-        res.status(500).json({message: 'Error al actualizar apoderado.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -102,8 +98,8 @@ exports.deleteParentAssignment = async (req, res) => {
 
         res.status(200).json({message: 'Apoderado eliminado correctamente.'});
     } catch (error) {
-        console.error('Error al eliminar apoderado: ', error.message);
-        res.status(500).json({message: 'Error al eliminar apoderado.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -152,7 +148,7 @@ exports.getParentAssignmentByUser = async (req, res) => {
 
         res.status(200).json(parent);
     } catch (error) {
-        console.error('Error al obtener datos de padre de familia por identificador: ', error.message);
-        res.status(500).json('Error interno en el servidor. Inténtelo de nuevo más tarde.');
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

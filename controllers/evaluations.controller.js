@@ -37,11 +37,8 @@ exports.createEvaluation = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al crear el examen: ', error);
-        res.status(500).json({
-            message: 'Error al crear el examen',
-            error: error.message,
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -79,8 +76,8 @@ exports.getEvaluations = async (req, res) => {
 
         res.status(200).json(exams);
     } catch (error) {
-        console.error('Error al obtener exámenes: ', error);
-        res.status(500).json({message: 'Error al obtener los exámenes: ', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -104,8 +101,8 @@ exports.updateEvaluation = async (req, res) => {
         await evaluations.save();
         res.status(200).json(evaluations);
     } catch (error) {
-        console.error('Error al actualizar evaluación: ', error.message);
-        res.status(500).json({message: 'Error al actualizar evaluación.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -125,8 +122,8 @@ exports.deleteEvaluation = async (req, res) => {
 
         res.status(200).json({message: 'Evaluación eliminada correctamente.'});
     } catch (error) {
-        console.error('Error al eliminar evaluación: ', error.message);
-        res.status(500).json({message: 'Error al eliminar evalución.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -172,8 +169,8 @@ exports.getEvaluationsByStudent = async (req, res) => {
 
         res.status(200).json(exams);
     } catch (error) {
-        console.error('❌ Error al obtener exámenes por alumno:', error);
-        res.status(500).json({message: 'Error al obtener exámenes por alumno', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -236,7 +233,7 @@ exports.getEvaluationsByGroupAndStudent = async (req, res) => {
             exams,
         });
     } catch (error) {
-        console.error('❌ Error al obtener exámenes por alumno y grupo docente:', error);
+        console.error('Error al obtener exámenes por alumno y grupo docente:', error);
         res.status(500).json({
             message: 'Error al obtener los exámenes por alumno y grupo docente.',
             error: error.message,
@@ -260,7 +257,7 @@ exports.getEvaluationsByBlockAndGroup = async (req, res) => {
             whereClause.assigmentId = assigmentId; // usamos el nombre real de la FK en tu modelo
         }
 
-        // 🔍 Consulta principal con includes
+        // Consulta principal con includes
         const exams = await Exams.findAll({
             where: whereClause,
             include: [
@@ -303,10 +300,7 @@ exports.getEvaluationsByBlockAndGroup = async (req, res) => {
             exams,
         });
     } catch (error) {
-        console.error('❌ Error al obtener exámenes por alumno y grupo docente:', error);
-        res.status(500).json({
-            message: 'Error al obtener los exámenes por alumno y grupo docente.',
-            error: error.message,
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

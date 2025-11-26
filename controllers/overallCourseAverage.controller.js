@@ -19,7 +19,7 @@ exports.calculateOverallCourseAverage = async (req, res) => {
             });
         }
 
-        // 🔹 Traer los promedios por bloque lectivo existentes
+        // Traer los promedios por bloque lectivo existentes
         const blocks = await TeachingBlockAverage.findAll({
             where: {studentId, assignmentId},
             include: [
@@ -38,7 +38,7 @@ exports.calculateOverallCourseAverage = async (req, res) => {
         }
         // sonarjs/sonar-rule: S7773
         // eslint-disable-next-line sonarjs/prefer-number-isnan
-        // 🔹 Cargar los promedios por bloque según el orden
+        // Cargar los promedios por bloque según el orden
         const averages = [null, null, null, null];
         // sonarjs/sonar-rule: S7773
         // eslint-disable-next-line sonarjs/prefer-number-isnan
@@ -46,7 +46,7 @@ exports.calculateOverallCourseAverage = async (req, res) => {
             averages[i] = parseFloat(b.teachingBlockAvarage);
         });
 
-        // 🔹 Calcular promedio anual considerando solo los bloques existentes
+        // Calcular promedio anual considerando solo los bloques existentes
         const validAverages = averages.filter(v => v !== null && !isNaN(v));
         const courseAverage = validAverages.length
             ? (validAverages.reduce((a, b) => a + b, 0) / validAverages.length).toFixed(2)
@@ -56,7 +56,7 @@ exports.calculateOverallCourseAverage = async (req, res) => {
             return res.status(400).json({message: "No se puede calcular el promedio anual (no hay bloques válidos)."});
         }
 
-        // 🔹 Crear o actualizar registro existente
+        // Crear o actualizar registro existente
         const [record, created] = await OverallCourseAverage.findOrCreate({
             where: {studentId, assignmentId, yearId},
             defaults: {
@@ -70,7 +70,7 @@ exports.calculateOverallCourseAverage = async (req, res) => {
         });
 
         if (!created) {
-            // 🔄 Si ya existe, actualizar los valores
+            // Si ya existe, actualizar los valores
             record.block1Average = averages[0];
             record.block2Average = averages[1];
             record.block3Average = averages[2];
@@ -85,11 +85,8 @@ exports.calculateOverallCourseAverage = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error al calcular promedio general:", error);
-        res.status(500).json({
-            message: "Error al calcular promedio general anual.",
-            error: error.message,
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -164,12 +161,8 @@ exports.getOverallCourseAverageByYearAndStudent = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error al obtener promedios generales:", error);
-        res.status(500).json({
-            status: false,
-            message: "Error al obtener promedios generales.",
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -244,12 +237,8 @@ exports.getOverallCourseAverageByYearAndGroup = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error al obtener promedios generales:", error);
-        res.status(500).json({
-            status: false,
-            message: "Error al obtener promedios generales.",
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -324,11 +313,7 @@ exports.getOverallCourseAverageByYearGroupAndStudent = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error al obtener promedios generales:", error);
-        res.status(500).json({
-            status: false,
-            message: "Error al obtener promedios generales.",
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

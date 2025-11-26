@@ -17,7 +17,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
     const t = await sequelize.transaction();
 
     try {
-        // 1️⃣ Obtener el horario
+        // Obtener el horario
         const schedule = await Schedules.findByPk(scheduleId);
         if (!schedule) {
             return res.status(404).json({message: "Horario no encontrado"});
@@ -29,7 +29,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
             return res.status(400).json({message: "El horario no tiene asignado un día de la semana"});
         }
 
-        // 2️⃣ Buscar todos los días lectivos de ese año que coincidan con el weekday
+        // Buscar todos los días lectivos de ese año que coincidan con el weekday
         const schoolDays = await SchoolDays.findAll({
             where: {
                 yearId,
@@ -43,7 +43,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
             return res.status(404).json({message: `No se encontraron días escolares para el día ${weekday} en el año ${yearId}`});
         }
 
-        // 3️⃣ Obtener todos los bloques lectivos del año
+        // Obtener todos los bloques lectivos del año
         const teachingBlocks = await TeachingBlocks.findAll({
             where: {yearId, status: 1},
             order: [['startDay', 'ASC']]
@@ -53,7 +53,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
             return res.status(404).json({message: "No hay bloques lectivos definidos para este año"});
         }
 
-        // 4️⃣ Crear registros para cada schoolDay, asignando el teachingBlock correspondiente
+        // Crear registros para cada schoolDay, asignando el teachingBlock correspondiente
         const records = [];
 
         for (const day of schoolDays) {
@@ -73,7 +73,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
             }
         }
 
-        // 5️⃣ Insertar registros en batch
+        // Insertar registros en batch
         if (records.length > 0) {
             await ScheduleSchoolDays.bulkCreate(records, {transaction: t});
         }
@@ -86,9 +86,8 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
         });
 
     } catch (error) {
-        await t.rollback();
-        console.error(error);
-        res.status(500).json({message: "Error generando días lectivos", error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -112,7 +111,8 @@ exports.getSchoolDaysBySchedule = async (req, res) => {
 
         res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({message: "Error al obtener los días de horario", error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -195,18 +195,14 @@ exports.bulkCreateSchoolDaysByYearAndTeacher = async (req, res) => {
         await t.commit();
 
         res.status(201).json({
-            message: `✅ Se generaron ${totalRecords} días lectivos para el docente ${teacherId} en el año ${yearId}`,
+            message: `Se generaron ${totalRecords} días lectivos para el docente ${teacherId} en el año ${yearId}`,
             totalHorarios: schedules.length,
             registros: allRecords
         });
 
     } catch (error) {
-        await t.rollback();
-        console.error(error);
-        res.status(500).json({
-            message: "Error al generar días lectivos para el docente",
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -232,7 +228,7 @@ exports.getDaysBySchedule = async (req, res) => {
         res.status(200).json(days);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: "Error al obtener los días del horario", error: error.message});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

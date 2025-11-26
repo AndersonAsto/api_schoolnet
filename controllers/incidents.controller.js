@@ -29,11 +29,8 @@ exports.createIncident = async (req, res) => {
             data: newIncident
         });
     } catch (error) {
-        console.error("Error al registrar incidencia:", error);
-        return res.status(500).json({
-            message: "Error al registrar incidencia.",
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -87,11 +84,8 @@ exports.getIncidents = async (req, res) => {
             data: incidents
         });
     } catch (error) {
-        console.error("Error al obtener incidencias:", error);
-        return res.status(500).json({
-            message: "Error al obtener incidencias.",
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -111,8 +105,8 @@ exports.deleteIncident = async (req, res) => {
 
         res.status(200).json({message: 'Incidencia eliminada correctamente.'});
     } catch (error) {
-        console.error('Error al eliminar incidencia: ', error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -134,7 +128,7 @@ exports.updateIncident = async (req, res) => {
         await incidents.save();
         res.status(200).json(incidents);
     } catch (error) {
-        console.error('Error al actualizar incidente: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -195,7 +189,7 @@ exports.getIncidentsByScheduleAndStudent = async (req, res) => {
 
         res.json(incidents);
     } catch (error) {
-        console.error('❌ Error obteniendo incidencias:', error);
-        res.status(500).json({message: 'Error obteniendo incidencias', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

@@ -12,8 +12,8 @@ exports.createGrade = async (req, res) => {
         res.status(201).json(newGrade);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al crear grado', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -24,8 +24,8 @@ exports.getGrades = async (req, res) => {
         res.json(grades);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener grados', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -47,8 +47,8 @@ exports.updateGrade = async (req, res) => {
         res.status(200).json(grades);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al actualizar grado', error})
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -69,19 +69,7 @@ exports.deleteGrade = async (req, res) => {
         res.status(200).json({message: 'Grado eliminado correctamente'});
 
     } catch (error) {
-        console.error('❌ Error al eliminar grado:', error.message);
-
-        // Detectar error de clave foránea (MySQL: ER_ROW_IS_REFERENCED_2)
-        if (error.name === 'SequelizeForeignKeyConstraintError' ||
-            error.parent?.code === 'ER_ROW_IS_REFERENCED_2') {
-            return res.status(409).json({
-                message: 'No se puede eliminar el grado porque está asociado a otros registros (conflicto de integridad).'
-            });
-        }
-
-        res.status(500).json({
-            message: 'Error al eliminar grado',
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

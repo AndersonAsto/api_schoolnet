@@ -18,7 +18,7 @@ exports.bulkCreateAttendances = async (req, res) => {
         await Attendances.bulkCreate(attendances);
         res.status(201).json({message: 'Asistencias registradas correctamente.'});
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
@@ -68,7 +68,7 @@ exports.getAttendances = async (req, res) => {
         });
         res.status(200).json(attendances);
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
@@ -110,7 +110,7 @@ exports.bulkUpdateAttendances = async (req, res) => {
         }
 
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
@@ -150,7 +150,7 @@ exports.getAttendancesByScheduleAndDay = async (req, res) => {
 
         res.json(assistances);
     } catch (error) {
-        console.error(error);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
@@ -197,7 +197,7 @@ exports.getAttendancesByScheduleAndStudent = async (req, res) => {
 
         res.status(200).json(assistances);
     } catch (error) {
-        console.error("Error obteniendo asistencias por estudiante: ", error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
@@ -206,13 +206,11 @@ exports.getAttendancesByGroupAndStudent = async (req, res) => {
     try {
         const {teacherGroupId, studentId} = req.params;
 
-        // 1️⃣ Buscar el grupo del docente
         const teacherGroup = await TeacherGroups.findByPk(teacherGroupId);
         if (!teacherGroup) {
             return res.status(404).json({message: 'Grupo de docente no encontrado'});
         }
 
-        // 2️⃣ Buscar los horarios que coincidan con curso, grado, sección y año
         const schedules = await Schedules.findAll({
             where: {
                 courseId: teacherGroup.courseId,
@@ -229,7 +227,6 @@ exports.getAttendancesByGroupAndStudent = async (req, res) => {
 
         const scheduleIds = schedules.map(s => s.id);
 
-        // 3️⃣ Buscar asistencias del estudiante en esos horarios
         const assistances = await Attendances.findAll({
             where: {
                 studentId: studentId,
@@ -262,12 +259,9 @@ exports.getAttendancesByGroupAndStudent = async (req, res) => {
             ],
             order: [['createdAt', 'ASC']]
         });
-
-        // 4️⃣ Responder
         return res.json(assistances);
-
     } catch (error) {
-        console.error('Error al obtener asistencias:', error);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

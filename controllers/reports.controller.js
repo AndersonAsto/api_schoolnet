@@ -25,7 +25,6 @@ const getApprovalStatus = (average) => {
     return numAvg >= 11 ? 'APROBADO' : 'DESAPROBADO';
 };
 
-
 exports.generateReportByYearAndStudent = async (req, res) => {
     const { studentEnrollmentId, yearId } = req.params;
 
@@ -332,13 +331,8 @@ exports.generateReportByYearAndStudent = async (req, res) => {
         doc.fill('#000000'); // Restaurar color a negro
 
         doc.end();
-    } catch (err) {
-        console.error(err);
-        if (!res.headersSent) {
-            res.status(500).json({
-                message: 'Error generando reporte',
-                error: err.message,
-            });
-        }
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

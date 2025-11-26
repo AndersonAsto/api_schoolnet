@@ -21,7 +21,7 @@ exports.calculateAnnualAverage = async (req, res) => {
             });
         }
 
-        // 🔹 Obtener todos los promedios por curso del estudiante en ese año
+        // Obtener todos los promedios por curso del estudiante en ese año
         const courseAverages = await OverallCourseAverage.findAll({
             where: {studentId, yearId},
             include: [
@@ -43,7 +43,7 @@ exports.calculateAnnualAverage = async (req, res) => {
             });
         }
 
-        // 🔹 Validar que existan 10 cursos distintos
+        // Validar que existan 10 cursos distintos
         const uniqueCourses = new Set(courseAverages.map(avg => avg.teachergroups?.courseId));
         if (uniqueCourses.size < 10) {
             return res.status(400).json({
@@ -52,7 +52,7 @@ exports.calculateAnnualAverage = async (req, res) => {
             });
         }
 
-        // 🔹 Calcular el promedio general del año (suma de courseAverage / cantidad de cursos)
+        // Calcular el promedio general del año (suma de courseAverage / cantidad de cursos)
         const validAverages = courseAverages
             .map(a => parseFloat(a.courseAverage))
             .filter(v => !isNaN(v));
@@ -60,7 +60,7 @@ exports.calculateAnnualAverage = async (req, res) => {
         const totalAverage = validAverages.reduce((acc, val) => acc + val, 0) / validAverages.length;
         const finalAverage = totalAverage.toFixed(2);
 
-        // 🔹 Verificar si ya existe un registro anual
+        // Verificar si ya existe un registro anual
         const existing = await AnnualAverage.findOne({
             where: {studentId, yearId}
         });
@@ -71,12 +71,12 @@ exports.calculateAnnualAverage = async (req, res) => {
 
             return res.status(200).json({
                 status: true,
-                message: "✅ Promedio anual actualizado correctamente.",
+                message: "Promedio anual actualizado correctamente.",
                 data: existing
             });
         }
 
-        // 🔹 Crear nuevo registro
+        // Crear nuevo registro
         const newRecord = await AnnualAverage.create({
             studentId,
             yearId,
@@ -85,17 +85,13 @@ exports.calculateAnnualAverage = async (req, res) => {
 
         res.status(201).json({
             status: true,
-            message: "✅ Promedio anual calculado y guardado correctamente.",
+            message: "Promedio anual calculado y guardado correctamente.",
             data: newRecord
         });
 
     } catch (error) {
-        console.error("❌ Error al calcular promedio anual:", error);
-        res.status(500).json({
-            status: false,
-            message: "Error interno al calcular promedio anual.",
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -224,14 +220,8 @@ exports.getAnnualAverageByYearAndTutor = async (req, res) => {
       data: annualAverages
     });
   } catch (error) {
-    console.error(
-      'Error al obtener datos de promedios anuales por año y grupo',
-      error.message
-    );
-    res.status(500).json({
-      status: false,
-      message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'
-    });
+    console.error(error.message);
+    res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
   }
 };
 
@@ -249,7 +239,7 @@ exports.getAnnualAverageByYearAndStudent = async (req, res) => {
     const annualAverage = await AnnualAverage.findOne({
       where: {
         yearId,
-        studentId,        // 👈 ojo: este studentId es el ID de StudentsEnrollments
+        studentId,
         status: true
       },
       include: [
@@ -308,14 +298,8 @@ exports.getAnnualAverageByYearAndStudent = async (req, res) => {
       data: annualAverage
     });
   } catch (error) {
-    console.error(
-      'Error al obtener promedio anual por año y estudiante',
-      error.message
-    );
-    return res.status(500).json({
-      status: false,
-      message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'
-    });
+    console.error(error.message);
+    res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
   }
 };
 
@@ -394,13 +378,7 @@ exports.getAnnualAverageByYearAndStudents = async (req, res) => {
       data: annualAverages,
     });
   } catch (error) {
-    console.error(
-      'Error al obtener promedios anuales por año y lista de estudiantes',
-      error.message
-    );
-    return res.status(500).json({
-      status: false,
-      message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-    });
+    console.error(error.message);
+    res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
   }
 };

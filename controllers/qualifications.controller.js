@@ -5,7 +5,6 @@ const Schedules = require('../models/schedules.model');
 const TeachingDays = require('../models/schoolDays.model');
 const Persons = require('../models/persons.model');
 const Years = require('../models/years.model');
-const Assistances = require('../models/attendances.model');
 const TeacherGroups = require('../models/teacherGroups.model');
 const {Op} = require('sequelize');
 
@@ -26,8 +25,8 @@ exports.bulkCreateQualifications = async (req, res) => {
         await Qualifications.bulkCreate(qualifications);
         res.status(201).json({message: 'Calificaciones registradas correctamente.'});
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al guardar calificaciones.', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -78,11 +77,8 @@ exports.getQualifications = async (req, res) => {
         res.json(qualifications);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            status: false,
-            message: 'Error obteniendo calificaciones'
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -131,12 +127,8 @@ exports.bulkUpdateQualifications = async (req, res) => {
         }
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            status: false,
-            message: "Error actualizando calificaciones",
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -173,11 +165,8 @@ exports.getQualificationsByScheduleAndDay = async (req, res) => {
         res.json(qualifications);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            status: false,
-            message: "Error obteniendo calificaciones"
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -197,8 +186,8 @@ exports.getQualificationsByScheduleAndStudent = async (req, res) => {
         });
         res.status(200).json(qualifications);
     } catch (error) {
-        console.error('❌ Error al obtener calificaciones por estudiante y horario:', error);
-        res.status(500).json({message: 'Error obteniendo calificaciones'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -206,13 +195,13 @@ exports.getQualificationsByGroupAndStudent = async (req, res) => {
     try {
         const {teacherGroupId, studentId} = req.params;
 
-        // 1️⃣ Buscar el grupo de docente
+        // Buscar el grupo de docente
         const teacherGroup = await TeacherGroups.findByPk(teacherGroupId);
         if (!teacherGroup) {
             return res.status(404).json({message: 'Grupo de docente no encontrado'});
         }
 
-        // 2️⃣ Buscar los horarios (Schedules) que coincidan con curso, grado, sección y año
+        // Buscar los horarios (Schedules) que coincidan con curso, grado, sección y año
         const schedules = await Schedules.findAll({
             where: {
                 courseId: teacherGroup.courseId,
@@ -229,7 +218,7 @@ exports.getQualificationsByGroupAndStudent = async (req, res) => {
 
         const scheduleIds = schedules.map(s => s.id);
 
-        // 3️⃣ Buscar las calificaciones del estudiante en esos horarios
+        // Buscar las calificaciones del estudiante en esos horarios
         const qualifications = await Qualifications.findAll({
             where: {
                 studentId: studentId,
@@ -246,14 +235,11 @@ exports.getQualificationsByGroupAndStudent = async (req, res) => {
             order: [['createdAt', 'ASC']]
         });
 
-        // 4️⃣ Responder con los datos
+        // Responder con los datos
         return res.json(qualifications);
 
     } catch (error) {
-        console.error('Error al obtener calificaciones:', error);
-        return res.status(500).json({
-            message: 'Error al obtener calificaciones',
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

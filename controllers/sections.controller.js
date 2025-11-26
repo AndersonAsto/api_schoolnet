@@ -12,8 +12,8 @@ exports.createSection = async (req, res) => {
         res.status(201).json(newSection);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al crear seccion', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -24,8 +24,8 @@ exports.getSections = async (req, res) => {
         res.json(sections);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener seccion', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -47,8 +47,8 @@ exports.updateSection = async (req, res) => {
         res.status(200).json(sections);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al actualizar seccion', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -67,7 +67,7 @@ exports.deleteSection = async (req, res) => {
         }
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al eliminar seccion', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

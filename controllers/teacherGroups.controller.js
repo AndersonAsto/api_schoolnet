@@ -21,7 +21,7 @@ exports.createTeacherGroup = async (req, res) => {
 
         res.status(201).json(newTeacherGroup);
     } catch (error) {
-        console.error('Error al crear grupo de docente: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -71,7 +71,7 @@ exports.getTeacherGroups = async (req, res) => {
         });
         res.status(200).json(teacherGroups);
     } catch (error) {
-        console.error('Error al obtener grupos de docentes: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -84,19 +84,19 @@ exports.getTeacherGroupsByYearAndUser = async (req, res) => {
             return res.status(400).json({message: "El identificador del usuario y del año son requeridos"});
         }
 
-        // 1️⃣ Buscar el usuario
+        // Buscar el usuario
         const user = await Users.findByPk(userId);
         if (!user) {
             return res.status(404).json({message: "Usuario no encontrado"});
         }
 
-        // 2️⃣ Buscar la persona asociada
+        // Buscar la persona asociada
         const person = await Persons.findByPk(user.personId);
         if (!person) {
             return res.status(404).json({message: "Persona asociada no encontrada"});
         }
 
-        // 3️⃣ Buscar asignación docente
+        // Buscar asignación docente
         const teacherAssignment = await TeacherAssignments.findOne({
             where: {personId: person.id},
         });
@@ -154,11 +154,8 @@ exports.getTeacherGroupsByYearAndUser = async (req, res) => {
         });
         res.status(200).json(teacherGroups);
     } catch (error) {
-        console.error("Error al obtener grupos asignados", error);
-        res.status(500).json({
-            message: "Error al obtener horarios del docente por año",
-            error: error.message,
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -223,7 +220,7 @@ exports.getTeacherGroupsByYearAndTutor = async (req, res) => {
         });
         res.status(200).json(teacherGroups);
     } catch (error) {
-        console.error('Error al obtener grupos por grados y sección: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -246,7 +243,7 @@ exports.updateTeacherGroup = async (req, res) => {
         await teacherGroups.save();
         res.status(200).json(teacherGroups);
     } catch (error) {
-        console.error('Error al actualizar grupo de docente: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
@@ -265,7 +262,7 @@ exports.deleteTeacherGroup = async (req, res) => {
 
         res.status(200).json({ message: 'Grupo de docente eliminado correctamente.' });
     } catch (error) {
-        console.error('Error al eliminar grupo de docente: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

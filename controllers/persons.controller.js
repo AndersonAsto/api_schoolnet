@@ -26,8 +26,8 @@ exports.createPerson = async (req, res) => {
         res.status(201).json(newPerson);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al crear persona', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -38,8 +38,8 @@ exports.getPersons = async (req, res) => {
         res.json(persons);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener personas', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -65,8 +65,8 @@ exports.updatePerson = async (req, res) => {
 
         res.status(200).json(persons);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al actualizar persona', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -87,19 +87,8 @@ exports.deletePersonById = async (req, res) => {
         res.status(200).json({message: 'Persona eliminada correctamente'});
 
     } catch (error) {
-        console.error('❌ Error al eliminar persona:', error.message);
-
-        if (error.name === 'SequelizeForeignKeyConstraintError' ||
-            error.parent?.code === 'ER_ROW_IS_REFERENCED_2') {
-            return res.status(409).json({
-                message: 'No se puede eliminar la persona porque está asociada a otros registros (conflicto de integridad).'
-            });
-        }
-
-        res.status(500).json({
-            message: 'Error al eliminar persona',
-            error: error.message
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -115,8 +104,8 @@ exports.getPersonsByPrivilege = async (req, res) => {
         });
         res.json(persons);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener personas', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -136,7 +125,7 @@ exports.getPersonsByRole = async (req, res) => {
         res.json(persons);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener personas por rol', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };

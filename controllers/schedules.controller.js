@@ -36,10 +36,8 @@ exports.createSchedule = async (req, res) => {
         res.status(201).json(newSchedule);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al crear horario: ', error
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -89,10 +87,8 @@ exports.getSchedules = async (req, res) => {
         });
         res.status(200).json(schedules);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al obtener horarios:', error
-        })
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -118,8 +114,8 @@ exports.updateSchedule = async (req, res) => {
         await schedules.save();
         res.status(200).json(schedules);
     } catch (error) {
-        console.error('Error al actualizar horario: ', error.message);
-        res.status(500).json({ message: 'Error al actualizar horario.' });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -139,8 +135,8 @@ exports.deleteSchedule = async (req, res) => {
 
         res.status(200).json({message: 'Horario eliminado correctamente.'});
     } catch (error) {
-        console.error('Error al eliminar horario: ', error.message);
-        res.status(500).json({message: 'Error al eliminar horario.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -170,7 +166,7 @@ exports.getSchedulesByUser = async (req, res) => {
 
         // Buscar horarios asociados a ese docente
         const schedules = await Schedules.findAll({
-            where: {teacherId: teacherAssignment.id}, // 👈 ajusta si tu campo se llama diferente
+            where: {teacherId: teacherAssignment.id}, // ajusta si tu campo se llama diferente
             include: [
                 {
                     model: Years,
@@ -223,11 +219,8 @@ exports.getSchedulesByUser = async (req, res) => {
 
         res.json(schedules);
     } catch (error) {
-        console.error("Error en getSchedulesByUser:", error);
-        res.status(500).json({
-            message: "Error al obtener horarios del docente",
-            error,
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -239,19 +232,19 @@ exports.getSchedulesByYearAndUser = async (req, res) => {
             return res.status(400).json({message: "El identificador del usuario y del año son requeridos"});
         }
 
-        // 1️⃣ Buscar el usuario
+        // Buscar el usuario
         const user = await Users.findByPk(userId);
         if (!user) {
             return res.status(404).json({message: "Usuario no encontrado"});
         }
 
-        // 2️⃣ Buscar la persona asociada
+        // Buscar la persona asociada
         const person = await Persons.findByPk(user.personId);
         if (!person) {
             return res.status(404).json({message: "Persona asociada no encontrada"});
         }
 
-        // 3️⃣ Buscar asignación docente
+        // Buscar asignación docente
         const teacherAssignment = await TeacherAssignments.findOne({
             where: {personId: person.id},
         });
@@ -259,11 +252,11 @@ exports.getSchedulesByYearAndUser = async (req, res) => {
             return res.status(404).json({message: "No se encontró asignación de docente"});
         }
 
-        // 4️⃣ Buscar horarios del docente filtrados por año
+        // Buscar horarios del docente filtrados por año
         const schedules = await Schedules.findAll({
             where: {
                 teacherId: teacherAssignment.id,
-                yearId, // 👈 filtro clave
+                yearId, // filtro clave
             },
             include: [
                 {
@@ -318,11 +311,8 @@ exports.getSchedulesByYearAndUser = async (req, res) => {
 
         res.status(200).json(schedules);
     } catch (error) {
-        console.error("Error en getSchedulesByUserAndYear:", error);
-        res.status(500).json({
-            message: "Error al obtener horarios del docente por año",
-            error: error.message,
-        });
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 
@@ -387,10 +377,8 @@ exports.getSchedulesByTeacher = async (req, res) => {
         res.json(schedules);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            message: 'Error al obtener horarios:', error
-        })
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -444,7 +432,7 @@ exports.getSchedulesByYear = async (req, res) => {
         });
         res.status(200).json(schedulesByYear);
     } catch (error) {
-        console.error('Error al obtener horarios por año: ', error.message);
+        console.error(error.message);
         res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

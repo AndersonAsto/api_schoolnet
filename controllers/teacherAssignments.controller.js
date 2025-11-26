@@ -15,8 +15,8 @@ exports.createTeacherAssignment = async (req, res) => {
         res.status(201).json(newTeacherAssignament);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al crear asignaciones de docentes', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -45,8 +45,8 @@ exports.getTeacherAssignments = async (req, res) => {
         res.json(teacherAssignments)
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener asignaciones de docentes', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -67,8 +67,8 @@ exports.updateTeacherAssignment = async (req, res) => {
         await teachers.save();
         res.status(200).json(teachers);
     } catch (error) {
-        console.error('Error al actualizar docente: ', error.message);
-        res.status(500).json({message: 'Error al actualizar docente.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -88,7 +88,7 @@ exports.deleteTeacherAssignment = async (req, res) => {
 
         res.status(200).json({message: 'Docente eliminado correctamente.'});
     } catch (error) {
-        console.error('Error al eliminar docente: ', error.message);
-        res.status(500).json({message: 'Error al eliminar docente.'});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }

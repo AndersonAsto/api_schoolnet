@@ -24,8 +24,8 @@ exports.getCourses = async (req, res) => {
         res.json(courses);
 
     } catch (error) {
-        console.error(error);
-        res.status(500).json({message: 'Error al obtener cursos', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -47,8 +47,8 @@ exports.updateCourse = async (req, res) => {
         res.status(200).json(courses);
 
     } catch (error) {
-        console.error(error)
-        res.status(500).json({message: 'Error al actualizar curso', error})
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 }
 
@@ -64,15 +64,7 @@ exports.deleteCourse = async (req, res) => {
         }
 
     } catch (error) {
-        console.error(error);
-
-        if (error.name === 'SequelizeForeignKeyConstraintError') {
-            return res.status(409).json({
-                message: 'No se puede eliminar el curso, está asociado a otros registros',
-                error: error.message
-            });
-        }
-
-        return res.status(500).json({message: 'Error al eliminar curso', error});
+        console.error(error.message);
+        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
