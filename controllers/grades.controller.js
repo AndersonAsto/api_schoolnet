@@ -1,4 +1,4 @@
-const Grades = require('../models/grades.model');
+const db = require('../models');
 
 exports.createGrade = async (req, res) => {
     try {
@@ -8,24 +8,24 @@ exports.createGrade = async (req, res) => {
         if (!grade)
             return res.status(400).json({error: 'No ha completado los campos requeridos.'});
 
-        const newGrade = await Grades.create({grade});
+        const newGrade = await db.Grades.create({grade});
         res.status(201).json(newGrade);
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.getGrades = async (req, res) => {
     try {
 
-        const grades = await Grades.findAll();
+        const grades = await db.Grades.findAll();
         res.json(grades);
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -35,7 +35,7 @@ exports.updateGrade = async (req, res) => {
 
     try {
 
-        const grades = await Grades.findByPk(id);
+        const grades = await db.Grades.findByPk(id);
 
         if (!grades) {
             return res.status(404).json({message: 'Grado no encontrado'});
@@ -48,7 +48,7 @@ exports.updateGrade = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -60,7 +60,7 @@ exports.deleteGrade = async (req, res) => {
             return res.status(400).json({message: 'ID inválido o no proporcionado'});
         }
 
-        const deleted = await Grades.destroy({where: {id}});
+        const deleted = await db.Grades.destroy({where: {id}});
 
         if (deleted === 0) {
             return res.status(404).json({message: 'Grado no encontrado'});
@@ -70,6 +70,6 @@ exports.deleteGrade = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

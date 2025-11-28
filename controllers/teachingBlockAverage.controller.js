@@ -1,16 +1,4 @@
-const {Op} = require("sequelize");
-const TeachingBlockAvarage = require("../models/teachingBlockAverage.model");
-const Exams = require("../models/evaluations.model");
-const TeachingBlocks = require("../models/teachingBlocks.model");
-const Schedules = require("../models/schedules.model");
-const StudentsEnrollments = require("../models/studentEnrollments.model");
-const Courses = require("../models/courses.model");
-const Grades = require("../models/grades.model");
-const Sections = require("../models/sections.model");
-const Persons = require("../models/persons.model");
-const Years = require("../models/years.model");
-const Qualifications = require("../models/qualifications.model");
-const TeacherGroups = require("../models/teacherGroups.model");
+const db = require('../models');
 
 exports.previewTeachingBlockAverage = async (req, res) => {
     try {
@@ -20,7 +8,7 @@ exports.previewTeachingBlockAverage = async (req, res) => {
             return res.status(400).json({message: 'Faltan parámetros obligatorios (studentId, assignmentId, teachingBlockId)'});
         }
 
-        const group = await TeacherGroups.findByPk(assignmentId);
+        const group = await db.TeacherGroups.findByPk(assignmentId);
         if (!group) {
             return res.status(404).json({message: 'TeacherGroup no encontrado'});
         }
@@ -28,10 +16,10 @@ exports.previewTeachingBlockAverage = async (req, res) => {
         const {gradeId, sectionId, courseId} = group;
 
         // Calcular como antes
-        const qualifications = await Qualifications.findAll({
+        const qualifications = await db.Qualifications.findAll({
             include: [
                 {
-                    model: Schedules,
+                    model: db.Schedules,
                     as: 'schedules',
                     where: {gradeId, sectionId, courseId},
                     attributes: [],
@@ -45,7 +33,7 @@ exports.previewTeachingBlockAverage = async (req, res) => {
             ? qualifications.reduce((sum, q) => sum + parseFloat(q.rating || 0), 0) / qualifications.length
             : 0;
 
-        const practices = await Exams.findAll({
+        const practices = await db.Evaluations.findAll({
             where: {studentId, assigmentId: assignmentId, teachingBlockId, type: 'Práctica', status: true},
             attributes: ['score'],
         });
@@ -54,7 +42,7 @@ exports.previewTeachingBlockAverage = async (req, res) => {
             ? practices.reduce((sum, e) => sum + parseFloat(e.score || 0), 0) / practices.length
             : 0;
 
-        const exams = await Exams.findAll({
+        const exams = await db.Evaluations.findAll({
             where: {studentId, assigmentId: assignmentId, teachingBlockId, type: 'Examen', status: true},
             attributes: ['score'],
         });
@@ -72,7 +60,7 @@ exports.previewTeachingBlockAverage = async (req, res) => {
         });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -84,15 +72,15 @@ exports.calculateTeachingBlockAverage = async (req, res) => {
             return res.status(400).json({message: 'Faltan parámetros obligatorios'});
         }
 
-        const group = await TeacherGroups.findByPk(assignmentId);
+        const group = await db.TeacherGroups.findByPk(assignmentId);
         if (!group) {
             return res.status(404).json({message: 'TeacherGroup no encontrado'});
         }
 
         const {gradeId, sectionId, courseId} = group;
 
-        const qualifications = await Qualifications.findAll({
-            include: [{model: Schedules, as: 'schedules', where: {gradeId, sectionId, courseId}, attributes: []}],
+        const qualifications = await db.Qualifications.findAll({
+            include: [{model: db.Schedules, as: 'schedules', where: {gradeId, sectionId, courseId}, attributes: []}],
             where: {studentId, teachingBlockId, status: true},
             attributes: ['rating'],
         });
@@ -101,7 +89,7 @@ exports.calculateTeachingBlockAverage = async (req, res) => {
             ? qualifications.reduce((sum, q) => sum + parseFloat(q.rating || 0), 0) / qualifications.length
             : 0;
 
-        const practices = await Exams.findAll({
+        const practices = await db.Evaluations.findAll({
             where: {studentId, assigmentId: assignmentId, teachingBlockId, type: 'Práctica', status: true},
             attributes: ['score'],
         });
@@ -110,7 +98,7 @@ exports.calculateTeachingBlockAverage = async (req, res) => {
             ? practices.reduce((sum, e) => sum + parseFloat(e.score || 0), 0) / practices.length
             : 0;
 
-        const exams = await Exams.findAll({
+        const exams = await db.Evaluations.findAll({
             where: {studentId, assigmentId: assignmentId, teachingBlockId, type: 'Examen', status: true},
             attributes: ['score'],
         });
@@ -122,7 +110,7 @@ exports.calculateTeachingBlockAverage = async (req, res) => {
         const teachingBlockAvarage = (dailyAvarage * 0.3 + practiceAvarage * 0.3 + examAvarage * 0.4).toFixed(2);
 
         // Buscar si ya existe registro
-        const existing = await TeachingBlockAvarage.findOne({
+        const existing = await db.TeachingBlockAverage.findOne({
             where: {studentId, assignmentId, teachingBlockId},
         });
 
@@ -135,7 +123,7 @@ exports.calculateTeachingBlockAverage = async (req, res) => {
                 updatedAt: new Date(),
             });
         } else {
-            await TeachingBlockAvarage.create({
+            await db.TeachingBlockAverage.create({
                 studentId,
                 assignmentId,
                 teachingBlockId,
@@ -154,7 +142,7 @@ exports.calculateTeachingBlockAverage = async (req, res) => {
         });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -162,30 +150,30 @@ exports.getTeachingBlockAverageByStudent = async (req, res) => {
     try {
         const {studentId} = req.params;
 
-        const averages = await TeachingBlockAvarage.findAll({
+        const averages = await db.TeachingBlockAverage.findAll({
             where: {studentId},
             include: [
                 {
-                    model: TeachingBlocks,
+                    model: db.TeachingBlocks,
                     as: "teachingblocks",
                     attributes: ["id", "teachingBlock", "startDay", "endDay"],
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: "teachergroups",
                     attributes: ["id"],
                     include: [
-                        {model: Courses, as: "courses", attributes: ["id", "course"]},
-                        {model: Grades, as: "grades", attributes: ["id", "grade"]},
-                        {model: Sections, as: "sections", attributes: ["id", "seccion"]},
-                        {model: Years, as: "years", attributes: ["id", "year"]}
+                        {model: db.Courses, as: "courses", attributes: ["id", "course"]},
+                        {model: db.Grades, as: "grades", attributes: ["id", "grade"]},
+                        {model: db.Sections, as: "sections", attributes: ["id", "seccion"]},
+                        {model: db.Years, as: "years", attributes: ["id", "year"]}
                     ],
                 },
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: "students",
                     attributes: ["id"],
-                    include: [{model: Persons, as: "persons", attributes: ["id", "names", "lastNames"]}],
+                    include: [{model: db.Persons, as: "persons", attributes: ["id", "names", "lastNames"]}],
                 },
             ],
             order: [["teachingBlockId", "ASC"]],
@@ -198,7 +186,7 @@ exports.getTeachingBlockAverageByStudent = async (req, res) => {
         res.status(200).json(averages);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -206,24 +194,24 @@ exports.getTeachingBlockAverageByGroup = async (req, res) => {
     try {
         const {assignmentId} = req.params;
 
-        const averages = await TeachingBlockAvarage.findAll({
+        const averages = await db.TeachingBlockAverage.findAll({
             where: {assignmentId},
             include: [
                 {
-                    model: TeachingBlocks,
+                    model: db.TeachingBlocks,
                     as: "teachingblocks",
                     attributes: ["id", "teachingBlock", "startDay", "endDay"],
                 },
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: "students",
                     attributes: ["id"],
-                    include: [{model: Persons, as: "persons", attributes: ["names", "lastNames"]}],
+                    include: [{model: db.Persons, as: "persons", attributes: ["names", "lastNames"]}],
                 },
             ],
             order: [
                 ["teachingBlockId", "ASC"],
-                [{model: StudentsEnrollments, as: "students"}, "id", "ASC"],
+                [{model: db.StudentEnrollments, as: "students"}, "id", "ASC"],
             ],
         });
 
@@ -233,7 +221,7 @@ exports.getTeachingBlockAverageByGroup = async (req, res) => {
         res.status(200).json(averages);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -241,24 +229,24 @@ exports.getTeachingBlockAverageByBlock = async (req, res) => {
     try {
         const {teachingBlockId} = req.params;
 
-        const averages = await TeachingBlockAvarage.findAll({
+        const averages = await db.TeachingBlockAverage.findAll({
             where: {teachingBlockId},
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: "students",
                     attributes: ["id"],
-                    include: [{model: Persons, as: "persons", attributes: ["names", "lastNames"]}],
+                    include: [{model: db.Persons, as: "persons", attributes: ["names", "lastNames"]}],
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: "teachergroups",
                     attributes: ["id"],
                     include: [
-                        {model: Courses, as: "courses", attributes: ["course"]},
-                        {model: Grades, as: "grades", attributes: ["grade"]},
-                        {model: Sections, as: "sections", attributes: ["seccion"]},
-                        {model: Years, as: "years", attributes: ["year"]}
+                        {model: db.Courses, as: "courses", attributes: ["course"]},
+                        {model: db.Grades, as: "grades", attributes: ["grade"]},
+                        {model: db.Sections, as: "sections", attributes: ["seccion"]},
+                        {model: db.Years, as: "years", attributes: ["year"]}
                     ],
                 },
             ],
@@ -272,7 +260,7 @@ exports.getTeachingBlockAverageByBlock = async (req, res) => {
         res.status(200).json(averages);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -284,30 +272,30 @@ exports.getTeachingBlockAverageByYearGroupAndStudent = async (req, res) => {
             return res.status(400).json({message: "Faltan parámetros: studentId, yearId o assignmentId"});
         }
 
-        const averages = await TeachingBlockAvarage.findAll({
+        const averages = await db.TeachingBlockAverage.findAll({
             where: {studentId, assignmentId},
             include: [
                 {
-                    model: TeachingBlocks,
+                    model: db.TeachingBlocks,
                     as: "teachingblocks",
                     attributes: ["id", "teachingBlock", "startDay", "endDay"],
                     where: {yearId},
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: "teachergroups",
                     include: [
-                        {model: Courses, as: "courses", attributes: ["id", "course"]},
-                        {model: Grades, as: "grades", attributes: ["id", "grade"]},
-                        {model: Sections, as: "sections", attributes: ["id", "seccion"]},
-                        {model: Years, as: "years", attributes: ["id", "year"]},
+                        {model: db.Courses, as: "courses", attributes: ["id", "course"]},
+                        {model: db.Grades, as: "grades", attributes: ["id", "grade"]},
+                        {model: db.Sections, as: "sections", attributes: ["id", "seccion"]},
+                        {model: db.Years, as: "years", attributes: ["id", "year"]},
                     ],
                 },
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: "students",
                     attributes: ["id"],
-                    include: [{model: Persons, as: "persons", attributes: ["id", "names", "lastNames"]}],
+                    include: [{model: db.Persons, as: "persons", attributes: ["id", "names", "lastNames"]}],
                 },
             ],
             order: [["teachingBlockId", "ASC"]],
@@ -322,6 +310,6 @@ exports.getTeachingBlockAverageByYearGroupAndStudent = async (req, res) => {
         res.status(200).json(averages);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

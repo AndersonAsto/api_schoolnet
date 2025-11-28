@@ -1,92 +1,90 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const tokenBlacklist = require('../services/tokenBlacklist');
-const { generateAccessToken, generateRefreshToken } = require('../utils/jwt');
-const TeacherAssignments = require('../models/teacherAssignments.model');
-const Tutors = require('../models/tutors.model');
-const Users = require('../models/users.model');
+const {generateAccessToken, generateRefreshToken} = require('../utils/jwt');
+const db = require('../models');
 
 exports.login = async (req, res, next) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ error: "Faltan credenciales" });
-    }
+    try {
+        const {username, password} = req.body;
+        if (!username || !password) {
+            return res.status(400).json({error: "Faltan credenciales"});
+        }
 
-    // Enviar personId
-    const user = await Users.findOne({
-      where: { userName: username, status: true },
-      attributes: ["id", "userName", "passwordHash", "role", "personId"],
-    });
-
-    if (!user) {
-      console.warn(`Intento fallido de login → usuario no encontrado: ${username}`);
-      return res.status(401).json({ error: "Usuario o contraseña inválidos" });
-    }
-
-    const validPassword = await bcrypt.compare(password, user.passwordHash);
-    if (!validPassword) {
-      console.warn(`Intento fallido de login → contraseña incorrecta para usuario: ${username}`);
-      return res.status(401).json({ error: "Usuario o contraseña inválidos" });
-    }
-
-    // Docente - Tutor
-    let isTeacher = false;
-    let isTutor = false;
-    let tutorId = null;
-
-    // Buscamos en función a personId
-    if (user.personId) {
-      const teacherAssignment = await TeacherAssignments.findOne({
-        where: {
-          personId: user.personId,
-          status: true,
-        },
-        attributes: ['id'],
-      });
-
-      if (teacherAssignment) {
-        isTeacher = true;
-
-        const tutorRecord = await Tutors.findOne({
-          where: {
-            teacherId: teacherAssignment.id,
-            status: true,
-          },
-          attributes: ['id'],
+        // Enviar personId
+        const user = await db.Users.findOne({
+            where: {userName: username, status: true},
+            attributes: ["id", "userName", "passwordHash", "role", "personId"],
         });
 
-        if (tutorRecord) {
-          isTutor = true;
-          tutorId = tutorRecord.id;
+        if (!user) {
+            console.warn(`Intento fallido de login → usuario no encontrado: ${username}`);
+            return res.status(401).json({error: "Usuario o contraseña inválidos"});
         }
-      }
+
+        const validPassword = await bcrypt.compare(password, user.passwordHash);
+        if (!validPassword) {
+            console.warn(`Intento fallido de login → contraseña incorrecta para usuario: ${username}`);
+            return res.status(401).json({error: "Usuario o contraseña inválidos"});
+        }
+
+        // Docente - Tutor
+        let isTeacher = false;
+        let isTutor = false;
+        let tutorId = null;
+
+        // Buscamos en función a personId
+        if (user.personId) {
+            const teacherAssignment = await db.TeacherAssignments.findOne({
+                where: {
+                    personId: user.personId,
+                    status: true,
+                },
+                attributes: ['id'],
+            });
+
+            if (teacherAssignment) {
+                isTeacher = true;
+
+                const tutorRecord = await db.Tutors.findOne({
+                    where: {
+                        teacherId: teacherAssignment.id,
+                        status: true,
+                    },
+                    attributes: ['id'],
+                });
+
+                if (tutorRecord) {
+                    isTutor = true;
+                    tutorId = tutorRecord.id;
+                }
+            }
+        }
+
+        // Generar tokens
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+
+        return res.json({
+            token: accessToken,
+            refreshToken,
+            id: user.id,
+            username: user.userName,
+            role: user.role,
+            user: {
+                id: user.id,
+                username: user.userName,
+                role: user.role,
+                personId: user.personId,
+                isTeacher,
+                isTutor,
+                tutorId,
+            },
+        });
+    } catch (err) {
+        console.error(err);
+        next(err);
     }
-
-    // Generar tokens
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    return res.json({
-      token: accessToken,
-      refreshToken,
-      id: user.id,
-      username: user.userName,
-      role: user.role,
-      user: {
-        id: user.id,
-        username: user.userName,
-        role: user.role,
-        personId: user.personId,
-        isTeacher,
-        isTutor,
-        tutorId,
-      },
-    });
-  } catch (err) {
-    console.error(err);
-    next(err);
-  }
 };
 
 exports.refresh = async (req, res) => {
@@ -101,7 +99,7 @@ exports.refresh = async (req, res) => {
         });
 
         // Validar usuario
-        const user = await Users.findByPk(payload.sub);
+        const user = await db.Users.findByPk(payload.sub);
         if (!user) {
             return res.status(401).json({error: "Usuario no encontrado"});
         }
@@ -122,7 +120,8 @@ exports.logout = (req, res) => {
     try {
         const payload = jwt.verify(token, process.env.JWT_SECRET, {issuer: process.env.JWT_ISS});
         tokenBlacklist.add(payload.jti, payload.exp);
-    } catch (_) {}
+    } catch (_) {
+    }
 
     return res.json({ok: true});
 };

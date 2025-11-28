@@ -1,7 +1,6 @@
 require('dotenv').config({quiet: true});
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
-
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -11,32 +10,8 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-const yearsRoutes = require('./routes/years.route');
-const teachingBlocksRoutes = require('./routes/teachingBlocks.route');
-const holidaysRoutes = require('./routes/holidays.routes');
-const teachingDaysRoutes = require('./routes/schoolDays.routes');
-const coursesRoutes = require('./routes/courses.routes');
-const gradesRoutes = require('./routes/grades.routes');
-const sectionsRoutes = require('./routes/sections.routes');
-const personsRoutes = require('./routes/persons.routes');
-const usersRoutes = require('./routes/users.routes');
-const teachersAssignmentsRoutes = require('./routes/teacherAssignments.routes');
-const studentEnrollmentsRoutes = require('./routes/studentEnrollments.routes');
-const representativeAssignments = require('./routes/parentAssignments.routes');
-const schedulesRoutes = require('./routes/schedules.routes');
-const assistanceRoutes = require('./routes/attendances.routes');
 const authRoutes = require('./routes/auth.routes');
-const qualificationRoutes = require('./routes/qualifications.routes');
-const examsRoutes = require('./routes/evaluations.routes');
-const tBAveragesRoutes = require('./routes/teachingBlockAverage.route');
-const generalAverage = require('./routes/overallCourseAverage.routes');
-const incidentsRoutes = require('./routes/incidents.route');
 const errorHandler = require('./middlewares/error.middleware');
-const scheduleSchoolDaysRoutes = require('./routes/schoolDaysBySchedule.routes');
-const teacherGroupsRoutes = require('./routes/teacherGroups.routes');
-const annualAverageRoutes = require('./routes/annualAverage.routes');
-const tutorsRoutes = require('./routes/tutors.routes');
-const reportRoutes = require('./routes/reports.routes');
 
 const corsOptions = {
     origin: (origin, callback) => {
@@ -45,7 +20,7 @@ const corsOptions = {
         if (
             origin.startsWith("http://localhost") ||
             origin.startsWith("http://127.0.0.1") ||
-            origin === "https://tudominio.com"
+            origin === "https://schoolnet.site"
         ) {
             return callback(null, true);
         }
@@ -56,9 +31,11 @@ const corsOptions = {
     credentials: true,
 };
 
+const appRoutes = require('./routes/index');
+
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: 10,
     message: {error: "Demasiados intentos de ingreso, espera unos minutos."},
 });
 
@@ -71,30 +48,30 @@ app.use("/api/auth/login", loginLimiter);
 app.use("/api/auth", authRoutes);
 app.use(errorHandler);
 
-app.use('/api', yearsRoutes);
-app.use('/api', teachingBlocksRoutes);
-app.use('/api', holidaysRoutes);
-app.use('/api', teachingDaysRoutes);
-app.use('/api', coursesRoutes);
-app.use('/api', gradesRoutes);
-app.use('/api', sectionsRoutes);
-app.use('/api', personsRoutes);
-app.use('/api', usersRoutes);
-app.use('/api', teachersAssignmentsRoutes);
-app.use('/api', studentEnrollmentsRoutes);
-app.use('/api', representativeAssignments);
-app.use('/api', schedulesRoutes);
-app.use('/api', assistanceRoutes);
-app.use('/api', qualificationRoutes);
-app.use('/api', examsRoutes);
-app.use('/api', tBAveragesRoutes);
-app.use('/api', generalAverage);
-app.use('/api', incidentsRoutes);
-app.use('/api', scheduleSchoolDaysRoutes);
-app.use('/api', teacherGroupsRoutes);
-app.use('/api', annualAverageRoutes);
-app.use('/api', tutorsRoutes);
-app.use('/api', reportRoutes);
+app.use('/api', appRoutes.AnnualAverageRoutes);
+app.use('/api', appRoutes.AttendancesRoutes);
+app.use('/api', appRoutes.CoursesRoutes);
+app.use('/api', appRoutes.EvaluationsRoutes);
+app.use('/api', appRoutes.GradeRoutes);
+app.use('/api', appRoutes.HolidaysRoutes);
+app.use('/api', appRoutes.IncidentsRoutes);
+app.use('/api', appRoutes.OverallCoursesRoutes);
+app.use('/api', appRoutes.ParentAssignmentsRoutes);
+app.use('/api', appRoutes.PersonsRoutes);
+app.use('/api', appRoutes.QualificationsRoutes);
+app.use('/api', appRoutes.ReportsRoutes);
+app.use('/api', appRoutes.SchedulesRoutes);
+app.use('/api', appRoutes.SchoolDaysRoutes);
+app.use('/api', appRoutes.SchoolDaysByScheduleRoutes);
+app.use('/api', appRoutes.SectionsRoutes);
+app.use('/api', appRoutes.StudentEnrollmentsRoutes);
+app.use('/api', appRoutes.TeacherAssignmentsRoutes);
+app.use('/api', appRoutes.TeacherGroupsRoutes);
+app.use('/api', appRoutes.TeachingBlockAverageRoutes);
+app.use('/api', appRoutes.TeachingBlocks);
+app.use('/api', appRoutes.TutorsRoutes);
+app.use('/api', appRoutes.UsersRoutes);
+app.use('/api', appRoutes.YearsRoutes);
 
 app.get('/', (req, res) => {
     res.send('Bienvenido')
@@ -105,7 +82,6 @@ sequelize.authenticate().then(() => {
     return Promise.resolve();
 }).then(() => {
     console.log('Base de datos sincronizada.');
-
     if (process.env.NODE_ENV !== 'test') {
         app.listen(PORT, () => {
             console.log(`Servidor corriendo en http://localhost:${PORT}`);

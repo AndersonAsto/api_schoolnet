@@ -1,14 +1,14 @@
-const Courses = require('../models/courses.model');
+const db = require('../models');
 
 exports.createCourse = async (req, res) => {
     try {
 
-        const {course, descripcion} = req.body;
+        const {course, recurrence} = req.body;
 
         if (!course)
             return res.status(400).json({error: 'No ha completado los campos requeridos.'});
 
-        const newCourse = await Courses.create({course, descripcion});
+        const newCourse = await db.Courses.create({course, recurrence});
         res.status(201).json(newCourse);
 
     } catch (error) {
@@ -20,42 +20,42 @@ exports.createCourse = async (req, res) => {
 exports.getCourses = async (req, res) => {
     try {
 
-        const courses = await Courses.findAll();
+        const courses = await db.Courses.findAll();
         res.json(courses);
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.updateCourse = async (req, res) => {
     const {id} = req.params;
-    const {course, descripcion} = req.body;
+    const {course, recurrence} = req.body;
 
     try {
 
-        const courses = await Courses.findByPk(id);
+        const courses = await db.Courses.findByPk(id);
 
         if (!courses)
             return res.status(404).json({message: 'Curso no encontrado'});
 
         courses.course = course;
-        courses.descripcion = descripcion;
+        courses.recurrence = recurrence;
 
         await courses.save();
         res.status(200).json(courses);
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.deleteCourse = async (req, res) => {
     try {
         const {id} = req.params;
-        const deleted = await Courses.destroy({where: {id}});
+        const deleted = await db.Courses.destroy({where: {id}});
 
         if (deleted) {
             return res.status(200).json({message: 'Curso eliminado correctamente'});
@@ -65,6 +65,6 @@ exports.deleteCourse = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

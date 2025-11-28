@@ -1,8 +1,4 @@
-const Exams = require('../models/evaluations.model');
-const StudentsEnrollments = require('../models/studentEnrollments.model');
-const TeachingBlocks = require('../models/teachingBlocks.model');
-const TeacherGroups = require('../models/teacherGroups.model');
-const Persons = require('../models/persons.model');
+const db = require('../models');
 
 exports.createEvaluation = async (req, res) => {
     try {
@@ -12,9 +8,9 @@ exports.createEvaluation = async (req, res) => {
             return res.status(400).json({message: 'Todos los campos son obligatorios'});
         }
 
-        const studentExists = await StudentsEnrollments.findByPk(studentId);
-        const assignmentExists = await TeacherGroups.findByPk(assigmentId);
-        const blockExists = await TeachingBlocks.findByPk(teachingBlockId);
+        const studentExists = await db.StudentEnrollments.findByPk(studentId);
+        const assignmentExists = await db.TeacherGroups.findByPk(assigmentId);
+        const blockExists = await db.TeachingBlocks.findByPk(teachingBlockId);
 
         if (!studentExists || !assignmentExists || !blockExists) {
             return res.status(404).json({
@@ -22,7 +18,7 @@ exports.createEvaluation = async (req, res) => {
             });
         }
 
-        const exam = await Exams.create({
+        const exam = await db.Evaluations.create({
             studentId,
             assigmentId,
             teachingBlockId,
@@ -38,32 +34,32 @@ exports.createEvaluation = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
 exports.getEvaluations = async (req, res) => {
     try {
-        const exams = await Exams.findAll({
+        const exams = await db.Evaluations.findAll({
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames']
                         }
                     ]
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: 'assignments',
                     attributes: ['id', 'courseId', 'sectionId', 'gradeId', 'teacherAssignmentId']
                 },
                 {
-                    model: TeachingBlocks,
+                    model: db.TeachingBlocks,
                     as: 'teachingblocks',
                     attributes: ['id', 'teachingBlock', 'startDay', 'endDay']
                 }
@@ -77,7 +73,7 @@ exports.getEvaluations = async (req, res) => {
         res.status(200).json(exams);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -85,7 +81,7 @@ exports.updateEvaluation = async (req, res) => {
     const {id} = req.params;
     const {studentId, assigmentId, teachingBlockId, score, examDate, type} = req.body;
     try {
-        const evaluations = await Exams.findByPk(id);
+        const evaluations = await db.Evaluations.findByPk(id);
 
         if (!evaluations) {
             return res.status(404).json({message: 'Evaluación no encontrada.'});
@@ -102,7 +98,7 @@ exports.updateEvaluation = async (req, res) => {
         res.status(200).json(evaluations);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -114,7 +110,7 @@ exports.deleteEvaluation = async (req, res) => {
             return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
         }
 
-        const deleted = await Exams.destroy({where: {id}});
+        const deleted = await db.Evaluations.destroy({where: {id}});
 
         if (deleted === 0) {
             return res.status(404).json({message: 'Evaluación no encontrada.'});
@@ -123,7 +119,7 @@ exports.deleteEvaluation = async (req, res) => {
         res.status(200).json({message: 'Evaluación eliminada correctamente.'});
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -135,27 +131,27 @@ exports.getEvaluationsByStudent = async (req, res) => {
             return res.status(400).json({message: 'Se requiere el studentId en los parámetros.'});
         }
 
-        const exams = await Exams.findAll({
+        const exams = await db.Evaluations.findAll({
             where: {studentId},
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames']
                         }
                     ]
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: 'assignments',
                     attributes: ['id', 'courseId', 'sectionId', 'gradeId', 'teacherAssignmentId']
                 },
                 {
-                    model: TeachingBlocks,
+                    model: db.TeachingBlocks,
                     as: 'teachingblocks',
                     attributes: ['id', 'teachingBlock', 'startDay', 'endDay']
                 }
@@ -170,7 +166,7 @@ exports.getEvaluationsByStudent = async (req, res) => {
         res.status(200).json(exams);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -191,27 +187,27 @@ exports.getEvaluationsByGroupAndStudent = async (req, res) => {
         }
 
         // 🔍 Consulta principal con includes
-        const exams = await Exams.findAll({
+        const exams = await db.Evaluations.findAll({
             where: whereClause,
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames'],
                         },
                     ],
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: 'assignments',
                     attributes: ['id', 'courseId', 'sectionId', 'gradeId', 'teacherAssignmentId'],
                 },
                 {
-                    model: TeachingBlocks,
+                    model: db.TeachingBlocks,
                     as: 'teachingblocks',
                     attributes: ['id', 'teachingBlock', 'startDay', 'endDay'],
                 },
@@ -258,27 +254,27 @@ exports.getEvaluationsByBlockAndGroup = async (req, res) => {
         }
 
         // Consulta principal con includes
-        const exams = await Exams.findAll({
+        const exams = await db.Evaluations.findAll({
             where: whereClause,
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames'],
                         },
                     ],
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: 'assignments',
                     attributes: ['id', 'courseId', 'sectionId', 'gradeId', 'teacherAssignmentId'],
                 },
                 {
-                    model: TeachingBlocks,
+                    model: db.TeachingBlocks,
                     as: 'teachingblocks',
                     attributes: ['id', 'teachingBlock', 'startDay', 'endDay'],
                 },
@@ -301,6 +297,6 @@ exports.getEvaluationsByBlockAndGroup = async (req, res) => {
         });
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

@@ -1,13 +1,4 @@
-const OverallCourseAverage = require('../models/overallCourseAverage.model');
-const TeachingBlockAverage = require('../models/teachingBlockAverage.model');
-const StudentsEnrollments = require('../models/studentEnrollments.model');
-const Years = require('../models/years.model');
-const TeachingBlocks = require('../models/teachingBlocks.model');
-const Persons = require('../models/persons.model');
-const Courses = require('../models/courses.model');
-const Grades = require('../models/grades.model');
-const Sections = require('../models/sections.model');
-const TeacherGroups = require('../models/teacherGroups.model');
+const db = require('../models');
 
 exports.calculateOverallCourseAverage = async (req, res) => {
     try {
@@ -20,11 +11,11 @@ exports.calculateOverallCourseAverage = async (req, res) => {
         }
 
         // Traer los promedios por bloque lectivo existentes
-        const blocks = await TeachingBlockAverage.findAll({
+        const blocks = await db.TeachingBlockAverage.findAll({
             where: {studentId, assignmentId},
             include: [
                 {
-                    model: TeachingBlocks,
+                    model: db.TeachingBlocks,
                     as: "teachingblocks",
                     attributes: ["id", "teachingBlock", "startDay", "endDay", "yearId"],
                     where: {yearId}
@@ -57,7 +48,7 @@ exports.calculateOverallCourseAverage = async (req, res) => {
         }
 
         // Crear o actualizar registro existente
-        const [record, created] = await OverallCourseAverage.findOrCreate({
+        const [record, created] = await db.OverallCourseAverage.findOrCreate({
             where: {studentId, assignmentId, yearId},
             defaults: {
                 block1Average: averages[0],
@@ -86,7 +77,7 @@ exports.calculateOverallCourseAverage = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -101,43 +92,43 @@ exports.getOverallCourseAverageByYearAndStudent = async (req, res) => {
             });
         }
 
-        const records = await OverallCourseAverage.findAll({
+        const records = await db.OverallCourseAverage.findAll({
             where: {studentId, yearId},
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['names', 'lastNames']
                         }
                     ]
                 },
                 {
-                    model: Years,
+                    model: db.Years,
                     as: 'years',
                     attributes: ['year']
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: 'teachergroups',
                     attributes: ['id', 'teacherAssignmentId', 'gradeId', 'sectionId', 'courseId'],
                     include: [
                         {
-                            model: Courses,
+                            model: db.Courses,
                             as: 'courses',
                             attributes: ['course']
                         },
                         {
-                            model: Grades,
+                            model: db.Grades,
                             as: 'grades',
                             attributes: ['grade']
                         },
                         {
-                            model: Sections,
+                            model: db.Sections,
                             as: 'sections',
                             attributes: ['seccion']
                         }
@@ -162,7 +153,7 @@ exports.getOverallCourseAverageByYearAndStudent = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -177,43 +168,43 @@ exports.getOverallCourseAverageByYearAndGroup = async (req, res) => {
             });
         }
 
-        const records = await OverallCourseAverage.findAll({
+        const records = await db.OverallCourseAverage.findAll({
             where: {yearId, assignmentId},
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['names', 'lastNames']
                         }
                     ]
                 },
                 {
-                    model: Years,
+                    model: db.Years,
                     as: 'years',
                     attributes: ['year']
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: 'teachergroups',
                     attributes: ['id', 'teacherAssignmentId', 'gradeId', 'sectionId', 'courseId'],
                     include: [
                         {
-                            model: Courses,
+                            model: db.Courses,
                             as: 'courses',
                             attributes: ['course']
                         },
                         {
-                            model: Grades,
+                            model: db.Grades,
                             as: 'grades',
                             attributes: ['grade']
                         },
                         {
-                            model: Sections,
+                            model: db.Sections,
                             as: 'sections',
                             attributes: ['seccion']
                         }
@@ -238,7 +229,7 @@ exports.getOverallCourseAverageByYearAndGroup = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -253,43 +244,43 @@ exports.getOverallCourseAverageByYearGroupAndStudent = async (req, res) => {
             });
         }
 
-        const records = await OverallCourseAverage.findAll({
+        const records = await db.OverallCourseAverage.findAll({
             where: {studentId, yearId, assignmentId},
             include: [
                 {
-                    model: StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['names', 'lastNames']
                         }
                     ]
                 },
                 {
-                    model: Years,
+                    model: db.Years,
                     as: 'years',
                     attributes: ['year']
                 },
                 {
-                    model: TeacherGroups,
+                    model: db.TeacherGroups,
                     as: 'teachergroups',
                     attributes: ['id', 'teacherAssignmentId', 'gradeId', 'sectionId', 'courseId'],
                     include: [
                         {
-                            model: Courses,
+                            model: db.Courses,
                             as: 'courses',
                             attributes: ['course']
                         },
                         {
-                            model: Grades,
+                            model: db.Grades,
                             as: 'grades',
                             attributes: ['grade']
                         },
                         {
-                            model: Sections,
+                            model: db.Sections,
                             as: 'sections',
                             attributes: ['seccion']
                         }
@@ -314,6 +305,6 @@ exports.getOverallCourseAverageByYearGroupAndStudent = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

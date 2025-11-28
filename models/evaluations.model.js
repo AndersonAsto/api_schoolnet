@@ -51,7 +51,7 @@ const Evaluations = sequelize.define('Evaluations', {
         defaultValue: true
     }
 }, {
-    tableName: 'exams',
+    tableName: 'evaluations',
     timestamps: true
 });
 

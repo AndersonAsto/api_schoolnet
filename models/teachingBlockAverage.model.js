@@ -55,7 +55,7 @@ const TeachingBlockAverage = sequelize.define('TeachingBlockAverage', {
         defaultValue: true
     }
 }, {
-    tableName: 'teachingblockavarage',
+    tableName: 'teachingblockaverage',
     timestamps: true
 });
 

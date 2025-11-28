@@ -1,12 +1,5 @@
-const sequelize = require('../config/db.config');
-const Qualifications = require('../models/qualifications.model');
-const StudentEnrollments = require('../models/studentEnrollments.model');
-const Schedules = require('../models/schedules.model');
-const TeachingDays = require('../models/schoolDays.model');
-const Persons = require('../models/persons.model');
-const Years = require('../models/years.model');
-const TeacherGroups = require('../models/teacherGroups.model');
 const {Op} = require('sequelize');
+const db = require('../models');
 
 exports.bulkCreateQualifications = async (req, res) => {
     try {
@@ -22,49 +15,49 @@ exports.bulkCreateQualifications = async (req, res) => {
             }
         });
 
-        await Qualifications.bulkCreate(qualifications);
+        await db.Qualifications.bulkCreate(qualifications);
         res.status(201).json({message: 'Calificaciones registradas correctamente.'});
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
 exports.getQualifications = async (req, res) => {
     try {
-        const qualifications = await Qualifications.findAll({
+        const qualifications = await db.Qualifications.findAll({
             include: [
                 {
-                    model: StudentEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames', 'role']
                         }
                     ]
                 },
                 {
-                    model: Schedules,
+                    model: db.Schedules,
                     as: 'schedules',
                     attributes: ['id', 'teacherId', 'courseId', 'gradeId', 'sectionId', 'weekday', 'startTime', 'endTime'],
                     include: [
                         {
-                            model: Years,
+                            model: db.Years,
                             as: 'years',
                             attributes: ['id', 'year'],
                         }
                     ],
                 },
                 {
-                    model: TeachingDays,
+                    model: db.SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay'],
                     include: [
                         {
-                            model: Years,
+                            model: db.Years,
                             as: 'years',
                             attributes: ['id', 'year'],
                         }
@@ -78,19 +71,19 @@ exports.getQualifications = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
 exports.bulkUpdateQualifications = async (req, res) => {
     try {
-        const updates = req.body; // [{id, rating, ratingDetail, scheduleId, schoolDayId, studentId}, ...]
+        const updates = req.body;
 
         if (!Array.isArray(updates) || updates.length === 0) {
             return res.status(400).json({status: false, message: "No hay datos para actualizar"});
         }
 
-        const transaction = await sequelize.transaction();
+        const transaction = await db.sequelize.transaction();
 
         try {
             for (const record of updates) {
@@ -103,7 +96,7 @@ exports.bulkUpdateQualifications = async (req, res) => {
                     record.rating = 0;
                 }
 
-                await Qualifications.update(
+                await db.Qualifications.update(
                     {
                         rating: record.rating,
                         ratingDetail: record.ratingDetail || "",
@@ -128,7 +121,7 @@ exports.bulkUpdateQualifications = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -143,16 +136,16 @@ exports.getQualificationsByScheduleAndDay = async (req, res) => {
             });
         }
 
-        const qualifications = await Qualifications.findAll({
+        const qualifications = await db.Qualifications.findAll({
             where: {scheduleId, schoolDayId},
             include: [
                 {
-                    model: StudentEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames']
                         }
@@ -161,23 +154,21 @@ exports.getQualificationsByScheduleAndDay = async (req, res) => {
             ],
             order: [['id', 'ASC']]
         });
-
         res.json(qualifications);
-
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
 exports.getQualificationsByScheduleAndStudent = async (req, res) => {
     const {studentId, scheduleId} = req.params;
     try {
-        const qualifications = await Qualifications.findAll({
+        const qualifications = await db.Qualifications.findAll({
             where: {studentId, scheduleId},
             include: [
                 {
-                    model: TeachingDays,
+                    model: db.SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay'],
                 }
@@ -187,7 +178,7 @@ exports.getQualificationsByScheduleAndStudent = async (req, res) => {
         res.status(200).json(qualifications);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -196,13 +187,13 @@ exports.getQualificationsByGroupAndStudent = async (req, res) => {
         const {teacherGroupId, studentId} = req.params;
 
         // Buscar el grupo de docente
-        const teacherGroup = await TeacherGroups.findByPk(teacherGroupId);
+        const teacherGroup = await db.TeacherGroups.findByPk(teacherGroupId);
         if (!teacherGroup) {
             return res.status(404).json({message: 'Grupo de docente no encontrado'});
         }
 
         // Buscar los horarios (Schedules) que coincidan con curso, grado, sección y año
-        const schedules = await Schedules.findAll({
+        const schedules = await db.Schedules.findAll({
             where: {
                 courseId: teacherGroup.courseId,
                 gradeId: teacherGroup.gradeId,
@@ -219,7 +210,7 @@ exports.getQualificationsByGroupAndStudent = async (req, res) => {
         const scheduleIds = schedules.map(s => s.id);
 
         // Buscar las calificaciones del estudiante en esos horarios
-        const qualifications = await Qualifications.findAll({
+        const qualifications = await db.Qualifications.findAll({
             where: {
                 studentId: studentId,
                 scheduleId: {[Op.in]: scheduleIds},
@@ -227,7 +218,7 @@ exports.getQualificationsByGroupAndStudent = async (req, res) => {
             },
             include: [
                 {
-                    model: TeachingDays,
+                    model: db.SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay']
                 }
@@ -235,11 +226,9 @@ exports.getQualificationsByGroupAndStudent = async (req, res) => {
             order: [['createdAt', 'ASC']]
         });
 
-        // Responder con los datos
         return res.json(qualifications);
-
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

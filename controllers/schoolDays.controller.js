@@ -1,5 +1,4 @@
-const SchoolDays = require('../models/schoolDays.model');
-const Years = require('../models/years.model');
+const db = require('../models');
 
 function getWeekNumberMondayFirst(date) {
     const year = date.getUTCFullYear();
@@ -20,10 +19,9 @@ exports.bulkCreateSchoolDays = async (req, res) => {
             return res.status(400).json({message: 'Datos inválidos.'});
         }
 
-        const existing = await SchoolDays.findOne({where: {yearId}});
-        if (existing) {
+        const existing = await db.SchoolDays.findOne({where: {yearId}});
+        if (existing)
             return res.status(409).json({message: 'Los días lectivos para este año ya existen.'});
-        }
 
         const weekdayNames = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 
@@ -34,7 +32,7 @@ exports.bulkCreateSchoolDays = async (req, res) => {
 
         const registrations = teachingDay.map(fecha => {
             const dateObj = new Date(`${fecha}T00:00:00Z`);
-            const weekdayNumber = (dateObj.getUTCDay() + 6) % 7 + 1; // lunes=1
+            const weekdayNumber = (dateObj.getUTCDay() + 6) % 7 + 1;
             const absoluteWeek = getWeekNumberMondayFirst(dateObj);
             const relativeWeek = absoluteWeek - firstWeekNumber + 1;
 
@@ -43,56 +41,51 @@ exports.bulkCreateSchoolDays = async (req, res) => {
                 teachingDay: fecha,
                 weekday: weekdayNames[weekdayNumber - 1],
                 weekdayNumber,
-                weekNumber: relativeWeek // empezando desde 1
+                weekNumber: relativeWeek
             };
         });
 
-        await SchoolDays.bulkCreate(registrations, {ignoreDuplicates: true});
+        await db.SchoolDays.bulkCreate(registrations, {ignoreDuplicates: true});
         res.status(201).json({message: 'Días lectivos registrados correctamente.'});
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
 exports.getSchoolDays = async (req, res) => {
     try {
-
-        const schoolDays = await SchoolDays.findAll({
+        const schoolDays = await db.SchoolDays.findAll({
             include: {
-                model: Years,
+                model: db.Years,
                 as: 'years',
                 attributes: ['id', 'year', 'status']
             }
         });
         res.status(200).json(schoolDays);
-
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.getSchoolDaysByYear = async (req, res) => {
     try {
-
         const {yearId} = req.params;
 
         if (!yearId)
             return res.status(400).json({message: 'El identificador del año es requerido'});
 
-        const days = await SchoolDays.findAll({
+        const days = await db.SchoolDays.findAll({
             where: {yearId},
             order: [
                 ['teachingDay', 'ASC']
             ]
         });
-
         res.status(200).json(days);
-
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

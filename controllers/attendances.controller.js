@@ -1,12 +1,5 @@
-const sequelize = require('../config/db.config');
-const Attendances = require('../models/attendances.model');
-const StudentEnrollments = require('../models/studentEnrollments.model');
-const Schedules = require('../models/schedules.model');
-const SchoolDays = require('../models/schoolDays.model');
-const Years = require('../models/years.model');
-const Persons = require('../models/persons.model');
 const {Op} = require('sequelize');
-const TeacherGroups = require('../models/teacherGroups.model');
+const db = require('../models');
 
 exports.bulkCreateAttendances = async (req, res) => {
     try {
@@ -15,49 +8,49 @@ exports.bulkCreateAttendances = async (req, res) => {
             return res.status(400).json({message: 'No se enviaron asistencias.'});
         }
 
-        await Attendances.bulkCreate(attendances);
+        await db.Attendances.bulkCreate(attendances);
         res.status(201).json({message: 'Asistencias registradas correctamente.'});
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
 exports.getAttendances = async (req, res) => {
     try {
-        const attendances = await Attendances.findAll({
+        const attendances = await db.Attendances.findAll({
             include: [
                 {
-                    model: StudentEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames', 'role']
                         }
                     ]
                 },
                 {
-                    model: Schedules,
+                    model: db.Schedules,
                     as: 'schedules',
                     attributes: ['id', 'teacherId', 'courseId', 'gradeId', 'sectionId', 'weekday', 'startTime', 'endTime'],
                     include: [
                         {
-                            model: Years,
+                            model: db.Years,
                             as: 'years',
                             attributes: ['id', 'year'],
                         }
                     ],
                 },
                 {
-                    model: SchoolDays,
+                    model: db.SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay'],
                     include: [
                         {
-                            model: Years,
+                            model: db.Years,
                             as: 'years',
                             attributes: ['id', 'year'],
                         }
@@ -69,7 +62,7 @@ exports.getAttendances = async (req, res) => {
         res.status(200).json(attendances);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -80,13 +73,13 @@ exports.bulkUpdateAttendances = async (req, res) => {
         if (!Array.isArray(updates) || updates.length === 0) {
             return res.status(400).json({status: false, message: "No hay datos para actualizar."});
         }
-        const transaction = await sequelize.transaction();
+        const transaction = await db.sequelize.transaction();
         try {
             for (const record of updates) {
                 if (!record.id) {
                     throw new Error(`El registro no tiene ID: ${JSON.stringify(record)}`);
                 }
-                await Attendances.update(
+                await db.Attendances.update(
                     {
                         assistance: record.assistance,
                         assistanceDetail: record.assistanceDetail || null,
@@ -111,7 +104,7 @@ exports.bulkUpdateAttendances = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -126,19 +119,19 @@ exports.getAttendancesByScheduleAndDay = async (req, res) => {
             });
         }
 
-        const assistances = await Attendances.findAll({
+        const assistances = await db.Attendances.findAll({
             where: {
                 scheduleId: Number(scheduleId),
                 schoolDayId: Number(schoolDayId)
             },
             include: [
                 {
-                    model: StudentEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames']
                         }
@@ -151,7 +144,7 @@ exports.getAttendancesByScheduleAndDay = async (req, res) => {
         res.json(assistances);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -159,31 +152,31 @@ exports.getAttendancesByScheduleAndStudent = async (req, res) => {
     const {studentId, scheduleId} = req.params;
 
     try {
-        const assistances = await Attendances.findAll({
+        const assistances = await db.Attendances.findAll({
             where: {
                 studentId,
                 scheduleId
             },
             include: [
                 {
-                    model: StudentEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames']
                         }
                     ]
                 },
                 {
-                    model: Schedules,
+                    model: db.Schedules,
                     as: 'schedules',
                     attributes: ['id', 'courseId', 'gradeId', 'sectionId', 'teacherId', 'weekday']
                 },
                 {
-                    model: SchoolDays,
+                    model: db.SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay']
                 }
@@ -198,7 +191,7 @@ exports.getAttendancesByScheduleAndStudent = async (req, res) => {
         res.status(200).json(assistances);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -206,12 +199,12 @@ exports.getAttendancesByGroupAndStudent = async (req, res) => {
     try {
         const {teacherGroupId, studentId} = req.params;
 
-        const teacherGroup = await TeacherGroups.findByPk(teacherGroupId);
+        const teacherGroup = await db.TeacherGroups.findByPk(teacherGroupId);
         if (!teacherGroup) {
             return res.status(404).json({message: 'Grupo de docente no encontrado'});
         }
 
-        const schedules = await Schedules.findAll({
+        const schedules = await db.Schedules.findAll({
             where: {
                 courseId: teacherGroup.courseId,
                 gradeId: teacherGroup.gradeId,
@@ -227,7 +220,7 @@ exports.getAttendancesByGroupAndStudent = async (req, res) => {
 
         const scheduleIds = schedules.map(s => s.id);
 
-        const assistances = await Attendances.findAll({
+        const assistances = await db.Attendances.findAll({
             where: {
                 studentId: studentId,
                 scheduleId: {[Op.in]: scheduleIds},
@@ -235,24 +228,24 @@ exports.getAttendancesByGroupAndStudent = async (req, res) => {
             },
             include: [
                 {
-                    model: StudentEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames']
                         }
                     ]
                 },
                 {
-                    model: Schedules,
+                    model: db.Schedules,
                     as: 'schedules',
                     attributes: ['id', 'courseId', 'gradeId', 'sectionId', 'teacherId', 'weekday']
                 },
                 {
-                    model: SchoolDays,
+                    model: db.SchoolDays,
                     as: 'schooldays',
                     attributes: ['id', 'teachingDay']
                 }
@@ -262,6 +255,6 @@ exports.getAttendancesByGroupAndStudent = async (req, res) => {
         return res.json(assistances);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

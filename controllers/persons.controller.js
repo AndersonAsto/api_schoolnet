@@ -1,8 +1,7 @@
-const Persons = require('../models/persons.model');
+const db = require('../models');
 
 exports.createPerson = async (req, res) => {
     try {
-
         const {
             names,
             lastNames,
@@ -15,7 +14,7 @@ exports.createPerson = async (req, res) => {
         if (!names || !lastNames || !dni || !email || !phone || !role)
             return res.status(400).json({error: 'No ha completado todos los campos'});
 
-        const newPerson = await Persons.create({
+        const newPerson = await db.Persons.create({
             names,
             lastNames,
             dni,
@@ -24,22 +23,19 @@ exports.createPerson = async (req, res) => {
             role
         });
         res.status(201).json(newPerson);
-
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.getPersons = async (req, res) => {
     try {
-
-        const persons = await Persons.findAll();
-        res.json(persons);
-
+        const persons = await db.Persons.findAll();
+        res.status(200).json(persons);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -48,7 +44,7 @@ exports.updatePerson = async (req, res) => {
     const {names, lastNames, dni, email, phone, role} = req.body;
 
     try {
-        const persons = await Persons.findByPk(id);
+        const persons = await db.Persons.findByPk(id);
 
         if (!persons) {
             return res.status(404).json({message: 'Persona no encontrada'});
@@ -66,11 +62,11 @@ exports.updatePerson = async (req, res) => {
         res.status(200).json(persons);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
-exports.deletePersonById = async (req, res) => {
+exports.deletePerson = async (req, res) => {
     try {
         const {id} = req.params;
 
@@ -78,7 +74,7 @@ exports.deletePersonById = async (req, res) => {
             return res.status(400).json({message: 'ID inválido o no proporcionado'});
         }
 
-        const deleted = await Persons.destroy({where: {id}});
+        const deleted = await db.Persons.destroy({where: {id}});
 
         if (deleted === 0) {
             return res.status(404).json({message: 'Persona no encontrada'});
@@ -88,7 +84,7 @@ exports.deletePersonById = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -97,21 +93,20 @@ exports.getPersonsByPrivilege = async (req, res) => {
 
         const validRoles = ['Administrador', 'Docente', 'Apoderado'];
 
-        const persons = await Persons.findAll({
+        const persons = await db.Persons.findAll({
             where: {
                 role: validRoles
             },
         });
-        res.json(persons);
+        res.status(200).json(persons);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.getPersonsByRole = async (req, res) => {
     try {
-
         const {role} = req.params;
 
         const validRoles = ['Administrador', 'Docente', 'Estudiante', 'Apoderado'];
@@ -119,13 +114,12 @@ exports.getPersonsByRole = async (req, res) => {
             return res.status(400).json({message: 'Rol inválido'});
         }
 
-        const persons = await Persons.findAll({
+        const persons = await db.Persons.findAll({
             where: {role}
         });
-        res.json(persons);
-
+        res.status(200).json(persons);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

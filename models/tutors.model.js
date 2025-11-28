@@ -49,7 +49,7 @@ const Tutors = sequelize.define('Tutors', {
         defaultValue: true
     }
 }, {
-    tableName: 'tutorteachers',
+    tableName: 'tutors',
     timestamps: true,
 });
 

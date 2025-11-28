@@ -48,7 +48,7 @@ const StudentEnrollments = sequelize.define('StudentsEnrollments', {
         defaultValue: true,
     }
 }, {
-    tableName: 'studentsenrollments',
+    tableName: 'studentenrollments',
     timestamps: true
 });
 

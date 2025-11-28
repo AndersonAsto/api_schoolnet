@@ -11,8 +11,8 @@ const Courses = sequelize.define('Courses', {
         type: DataTypes.STRING(100),
         allowNull: false
     },
-    descripcion: {
-        type: DataTypes.TEXT,
+    recurrence: {
+        type: DataTypes.INTEGER,
         allowNull: true,
     },
     status: {

@@ -1,5 +1,4 @@
-const TeachingBlocks = require('../models/teachingBlocks.model');
-const Years = require('../models/years.model');
+const db = require('../models');
 
 exports.createTeachingBlock = async (req, res) => {
     try {
@@ -13,7 +12,7 @@ exports.createTeachingBlock = async (req, res) => {
         if (!yearId || !teachingBlock || !startDay || !endDay)
             return res.status(400).json({message: 'Faltan datos obligatorios.'});
 
-        const newTeachingBlock = await TeachingBlocks.create({
+        const newTeachingBlock = await db.TeachingBlocks.create({
             yearId,
             teachingBlock,
             startDay,
@@ -22,15 +21,15 @@ exports.createTeachingBlock = async (req, res) => {
         res.status(201).json(newTeachingBlock);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.getTeachingBlocks = async (req, res) => {
     try {
-        const teachingBlocks = await TeachingBlocks.findAll({
+        const teachingBlocks = await db.TeachingBlocks.findAll({
             include: {
-                model: Years,
+                model: db.Years,
                 as: 'years',
                 attributes: ['id', 'year', 'status']
             }
@@ -38,7 +37,7 @@ exports.getTeachingBlocks = async (req, res) => {
         res.status(200).json(teachingBlocks);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -46,13 +45,13 @@ exports.getBlocksByYear = async (req, res) => {
     try {
         const {yearId} = req.params;
 
-        const blocks = await TeachingBlocks.findAll({
+        const blocks = await db.TeachingBlocks.findAll({
             where: {yearId}
         });
         res.status(200).json(blocks);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -66,7 +65,7 @@ exports.updateTeachingBlock = async (req, res) => {
     } = req.body;
 
     try {
-        const teachingBlocks = await TeachingBlocks.findByPk(id);
+        const teachingBlocks = await db.TeachingBlocks.findByPk(id);
 
         if (!teachingBlocks)
             return res.status(404).json({message: 'Bloque lectivo no encontrado.'});
@@ -80,14 +79,14 @@ exports.updateTeachingBlock = async (req, res) => {
         res.status(200).json(teachingBlocks);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.deteleTeachingBlockById = async (req, res) => {
     try {
         const {id} = req.params;
-        const deleted = await TeachingBlocks.destroy({where: {id}});
+        const deleted = await db.TeachingBlocks.destroy({where: {id}});
 
         if (deleted)
             res.status(200).json({message: 'Bloque lectivo eliminado correctamente.'});
@@ -95,6 +94,6 @@ exports.deteleTeachingBlockById = async (req, res) => {
             res.status(404).json({message: 'Bloque lectivo no encontrado.'});
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }

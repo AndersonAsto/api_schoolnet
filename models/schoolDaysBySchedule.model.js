@@ -5,7 +5,7 @@ const Schedules = require('./schedules.model');
 const TeachingBlocks = require('./teachingBlocks.model');
 const SchoolDays = require('./schoolDays.model');
 
-const ScheduleSchoolDays = sequelize.define('ScheduleSchoolDays', {
+const SchoolDaysBySchedule = sequelize.define('SchoolDaysBySchedule', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -48,28 +48,28 @@ const ScheduleSchoolDays = sequelize.define('ScheduleSchoolDays', {
         defaultValue: true,
     }
 }, {
-    tableName: 'scheduleschooldays',
+    tableName: 'schooldaysbyschedule',
     timestamps: true,
 });
 
-ScheduleSchoolDays.belongsTo(Years, {
+SchoolDaysBySchedule.belongsTo(Years, {
     foreignKey: 'yearId',
     as: 'years'
 });
 
-ScheduleSchoolDays.belongsTo(Schedules, {
+SchoolDaysBySchedule.belongsTo(Schedules, {
     foreignKey: 'scheduleId',
     as: 'schedules'
 });
 
-ScheduleSchoolDays.belongsTo(TeachingBlocks, {
+SchoolDaysBySchedule.belongsTo(TeachingBlocks, {
     foreignKey: 'teachingBlockId',
     as: 'teachingBlocks'
 });
 
-ScheduleSchoolDays.belongsTo(SchoolDays, {
+SchoolDaysBySchedule.belongsTo(SchoolDays, {
     foreignKey: 'schoolDayId',
     as: 'schoolDays'
 })
 
-module.exports = ScheduleSchoolDays;
+module.exports = SchoolDaysBySchedule;

@@ -1,11 +1,4 @@
-const ScheduleSchoolDays = require('../models/schoolDaysBySchedule.model');
-const TeachingBlocks = require('../models/teachingBlocks.model');
-const SchoolDays = require('../models/schoolDays.model');
-const Schedules = require('../models/schedules.model');
-const sequelize = require('../config/db.config');
-const {Op} = require('sequelize');
-const Users = require('../models/users.model');
-const Years = require('../models/years.model');
+const db = require('../models');
 
 exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
     const {yearId, scheduleId} = req.body;
@@ -14,11 +7,11 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
         return res.status(400).json({message: "Debe proporcionar yearId y scheduleId"});
     }
 
-    const t = await sequelize.transaction();
+    const t = await db.sequelize.transaction();
 
     try {
         // Obtener el horario
-        const schedule = await Schedules.findByPk(scheduleId);
+        const schedule = await db.Schedules.findByPk(scheduleId);
         if (!schedule) {
             return res.status(404).json({message: "Horario no encontrado"});
         }
@@ -30,7 +23,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
         }
 
         // Buscar todos los días lectivos de ese año que coincidan con el weekday
-        const schoolDays = await SchoolDays.findAll({
+        const schoolDays = await db.SchoolDays.findAll({
             where: {
                 yearId,
                 weekday,
@@ -44,7 +37,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
         }
 
         // Obtener todos los bloques lectivos del año
-        const teachingBlocks = await TeachingBlocks.findAll({
+        const teachingBlocks = await db.TeachingBlocks.findAll({
             where: {yearId, status: 1},
             order: [['startDay', 'ASC']]
         });
@@ -75,7 +68,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
 
         // Insertar registros en batch
         if (records.length > 0) {
-            await ScheduleSchoolDays.bulkCreate(records, {transaction: t});
+            await db.SchoolDaysBySchedule.bulkCreate(records, {transaction: t});
         }
 
         await t.commit();
@@ -87,7 +80,7 @@ exports.bulkCreateSchoolDaysByYearAndSchedule = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -95,16 +88,16 @@ exports.getSchoolDaysBySchedule = async (req, res) => {
     const {yearId, scheduleId} = req.query;
 
     try {
-        const data = await ScheduleSchoolDays.findAll({
+        const data = await db.SchoolDaysBySchedule.findAll({
             where: {
                 ...(yearId && {yearId}),
                 ...(scheduleId && {scheduleId})
             },
             include: [
-                {model: SchoolDays, as: 'schoolDays', attributes: ['id', 'teachingDay', 'weekday']},
-                {model: Years, as: 'years', attributes: ['id', 'year']},
-                {model: Schedules, as: 'schedules'},
-                {model: TeachingBlocks, as: 'teachingBlocks', attributes: ['id', 'teachingBlock']}
+                {model: db.SchoolDays, as: 'schoolDays', attributes: ['id', 'teachingDay', 'weekday']},
+                {model: db.Years, as: 'years', attributes: ['id', 'year']},
+                {model: db.Schedules, as: 'schedules'},
+                {model: db.TeachingBlocks, as: 'teachingBlocks', attributes: ['id', 'teachingBlock']}
             ],
             order: [['id', 'ASC']]
         });
@@ -112,7 +105,7 @@ exports.getSchoolDaysBySchedule = async (req, res) => {
         res.status(200).json(data);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -123,17 +116,17 @@ exports.bulkCreateSchoolDaysByYearAndTeacher = async (req, res) => {
         return res.status(400).json({message: "Debe proporcionar yearId y teacherId"});
     }
 
-    const t = await sequelize.transaction();
+    const t = await db.sequelize.transaction();
 
     try {
-        // 1️⃣ Verificar que el docente exista
-        const teacher = await Users.findByPk(teacherId);
+        // Verificar que el docente exista
+        const teacher = await db.Users.findByPk(teacherId);
         if (!teacher) {
             return res.status(404).json({message: "Docente no encontrado"});
         }
 
-        // 2️⃣ Obtener todos los horarios del docente en ese año
-        const schedules = await Schedules.findAll({
+        // Obtener todos los horarios del docente en ese año
+        const schedules = await db.Schedules.findAll({
             where: {teacherId, yearId},
             attributes: ['id', 'weekday'],
             order: [['id', 'ASC']]
@@ -143,8 +136,8 @@ exports.bulkCreateSchoolDaysByYearAndTeacher = async (req, res) => {
             return res.status(404).json({message: "El docente no tiene horarios asignados en este año"});
         }
 
-        // 3️⃣ Obtener todos los bloques lectivos del año
-        const teachingBlocks = await TeachingBlocks.findAll({
+        // Obtener todos los bloques lectivos del año
+        const teachingBlocks = await db.TeachingBlocks.findAll({
             where: {yearId, status: 1},
             order: [['startDay', 'ASC']]
         });
@@ -156,13 +149,13 @@ exports.bulkCreateSchoolDaysByYearAndTeacher = async (req, res) => {
         let totalRecords = 0;
         const allRecords = [];
 
-        // 4️⃣ Procesar cada horario
+        // Procesar cada horario
         for (const schedule of schedules) {
             const weekday = schedule.weekday?.toLowerCase();
             if (!weekday) continue;
 
             // Buscar los días lectivos del año que coincidan con el día del horario
-            const schoolDays = await SchoolDays.findAll({
+            const schoolDays = await db.SchoolDays.findAll({
                 where: {yearId, weekday, status: 1},
                 order: [['teachingDay', 'ASC']]
             });
@@ -187,9 +180,9 @@ exports.bulkCreateSchoolDaysByYearAndTeacher = async (req, res) => {
             }
         }
 
-        // 5️⃣ Insertar todos los registros generados
+        // Insertar todos los registros generados
         if (allRecords.length > 0) {
-            await ScheduleSchoolDays.bulkCreate(allRecords, {transaction: t});
+            await db.SchoolDaysBySchedule.bulkCreate(allRecords, {transaction: t});
         }
 
         await t.commit();
@@ -202,7 +195,7 @@ exports.bulkCreateSchoolDaysByYearAndTeacher = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -210,15 +203,15 @@ exports.getDaysBySchedule = async (req, res) => {
     const {scheduleId} = req.params;
 
     try {
-        const days = await ScheduleSchoolDays.findAll({
+        const days = await db.SchoolDaysBySchedule.findAll({
             where: {scheduleId},
             include: [
-                {model: SchoolDays, as: 'schoolDays', attributes: ['id', 'teachingDay', 'weekday']},
-                {model: Years, as: 'years', attributes: ['id', 'year']},
-                {model: Schedules, as: 'schedules'},
-                {model: TeachingBlocks, as: 'teachingBlocks', attributes: ['id', 'teachingBlock']}
+                {model: db.SchoolDays, as: 'schoolDays', attributes: ['id', 'teachingDay', 'weekday']},
+                {model: db.Years, as: 'years', attributes: ['id', 'year']},
+                {model: db.Schedules, as: 'schedules'},
+                {model: db.TeachingBlocks, as: 'teachingBlocks', attributes: ['id', 'teachingBlock']}
             ],
-            order: [[{model: SchoolDays, as: 'schoolDays'}, 'teachingDay', 'ASC']]
+            order: [[{model: db.SchoolDays, as: 'schoolDays'}, 'teachingDay', 'ASC']]
         });
 
         if (!days.length) {
@@ -229,6 +222,6 @@ exports.getDaysBySchedule = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

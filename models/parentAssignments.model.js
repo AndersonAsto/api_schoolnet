@@ -44,7 +44,7 @@ const ParentAssignments = sequelize.define('RepresentativesAssignments', {
     }
 }, {
     timestamps: true,
-    tableName: 'representativesassignments'
+    tableName: 'parentassignments'
 });
 
 ParentAssignments.belongsTo(StudentEnrollments, {

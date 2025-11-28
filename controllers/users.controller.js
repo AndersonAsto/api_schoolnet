@@ -1,5 +1,4 @@
-const Persons = require('../models/persons.model');
-const Users = require('../models/users.model');
+const db = require('../models');
 
 exports.createUser = async (req, res) => {
     try {
@@ -8,7 +7,7 @@ exports.createUser = async (req, res) => {
         if (!personId || !userName || !passwordHash || !role)
             return res.status(400).json({error: 'No ha completado los campos requeridos.'});
 
-        const newUser = await Users.create({
+        const newUser = await db.Users.create({
             personId,
             userName,
             passwordHash,
@@ -21,15 +20,15 @@ exports.createUser = async (req, res) => {
         res.status(201).json(userResponse);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.getUsers = async (req, res) => {
     try {
-        const users = await Users.findAll({
+        const users = await db.Users.findAll({
             include: {
-                model: Persons,
+                model: db.Persons,
                 as: 'persons',
                 attributes: ['id', 'names', 'lastNames']
             },
@@ -38,7 +37,7 @@ exports.getUsers = async (req, res) => {
         res.status(200).json(users);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };
 
@@ -49,10 +48,10 @@ exports.getUsersByRole = async (req, res) => {
         if (!validRoles.includes(role))
             return res.status(400).json({message: 'Rol inválido.'});
 
-        const persons = await Users.findAll({
+        const persons = await db.Users.findAll({
             where: {role},
             include: {
-                model: Persons,
+                model: db.Persons,
                 as: 'persons',
                 attributes: ['id', 'names', 'lastNames']
             },
@@ -61,7 +60,7 @@ exports.getUsersByRole = async (req, res) => {
         res.status(200).json(persons);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -70,7 +69,7 @@ exports.updateUser = async (req, res) => {
     const {personId, userName, role, chargeDetail} = req.body;
 
     try {
-        const users = await Users.findByPk(id);
+        const users = await db.Users.findByPk(id);
 
         if (!users)
             return res.status(404).json({message: 'Usuario no encontrado.'});
@@ -87,14 +86,14 @@ exports.updateUser = async (req, res) => {
         res.status(200).json(userResponse);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
-exports.deleteStudentById = async (req, res) => {
+exports.deleteStudent = async (req, res) => {
     try {
         const {id} = req.params;
-        const deleted = await Users.destroy({where: {id}});
+        const deleted = await db.Users.destroy({where: {id}});
 
         if (deleted)
             res.status(200).json({message: 'Usuario eliminado correctamente.'});
@@ -103,6 +102,6 @@ exports.deleteStudentById = async (req, res) => {
 
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 };

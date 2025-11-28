@@ -47,7 +47,7 @@ const Attendances = sequelize.define('Attendances', {
         defaultValue: true
     }
 }, {
-    tableName: 'assistances',
+    tableName: 'attendances',
     timestamps: true
 });
 

@@ -1,37 +1,54 @@
-// models/index.js
 const sequelize = require('../config/db.config');
-const { Sequelize } = require('sequelize');
+const {Sequelize} = require('sequelize');
 
-const Person = require('./persons.model');
-const Users = require('./users.model');
-const Courses = require('./courses.model');
-const Years = require('./years.model');
-const Grade = require('./grades.model');
-const Section = require('./sections.model');
-const StudentEnrollment = require('./studentEnrollments.model');
-const TutorTeacher = require('./tutors.model');
-const TeacherAssignment = require('./teacherAssignments.model');
-const TeacherGroup = require('./teacherGroups.model');
-const OverallCourseAverage = require('./overallCourseAverage.model');
-const TeachingBlockAverage = require('./teachingBlockAverage.model');
-const TeachingBlock = require('./teachingBlocks.model');
 const AnnualAverage = require('./annualAverage.model');
+const Attendances = require('./attendances.model');
+const Courses = require('./courses.model');
+const Evaluations = require('./evaluations.model');
+const Grades = require('./grades.model');
+const Holidays = require('./holidays.model');
+const Incidents = require('./incidents.model');
+const OverallCourseAverage = require('./overallCourseAverage.model');
+const ParentAssignments = require('./parentAssignments.model');
+const Persons = require('./persons.model');
+const Qualifications = require('./qualifications.model');
+const Schedules = require('./schedules.model');
+const SchoolDays = require('./schoolDays.model');
+const SchoolDaysBySchedule = require('./schoolDaysBySchedule.model');
+const Sections = require('./sections.model');
+const StudentEnrollments = require('./studentEnrollments.model');
+const TeacherAssignments = require('./teacherAssignments.model');
+const TeacherGroups = require('./teacherGroups.model');
+const TeachingBlockAverage = require('./teachingBlockAverage.model');
+const TeachingBlocks = require('./teachingBlocks.model');
+const Tutors = require('./tutors.model');
+const Users = require('./users.model');
+const Years = require('./years.model');
 
 module.exports = {
     sequelize,
     Sequelize,
-    Person,
+    AnnualAverage,
+    Attendances,
+    Courses,
+    Evaluations,
+    Grades,
+    Holidays,
+    Incidents,
+    OverallCourseAverage,
+    ParentAssignments,
+    Persons,
+    Qualifications,
+    Schedules,
+    SchoolDays,
+    SchoolDaysBySchedule,
+    Sections,
+    StudentEnrollments,
+    TeacherAssignments,
+    TeacherGroups,
+    TeachingBlockAverage,
+    TeachingBlocks,
+    Tutors,
     Users,
     Years,
-    Grade,
-    Section,
-    StudentEnrollment,
-    TutorTeacher,
-    TeacherAssignment,
-    TeacherGroup,
-    OverallCourseAverage,
-    TeachingBlockAverage,
-    TeachingBlock,
-    AnnualAverage,
-    Courses,
 };

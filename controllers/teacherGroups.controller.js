@@ -1,69 +1,61 @@
-const Courses = require('../models/courses.model');
-const Grades = require('../models/grades.model');
-const Persons = require('../models/persons.model');
-const Sections = require('../models/sections.model');
-const TeacherGroups = require('../models/teacherGroups.model');
-const TeacherAssignments = require('../models/teacherAssignments.model');
-const Users = require('../models/users.model');
-const Years = require('../models/years.model');
-const Tutors = require('../models/tutors.model');
+const db = require('../models');
 
 exports.createTeacherGroup = async (req, res) => {
     try {
-        const { teacherAssignmentId, yearId, courseId, gradeId, sectionId } = req.body;
+        const {teacherAssignmentId, yearId, courseId, gradeId, sectionId} = req.body;
 
         if (!teacherAssignmentId || !yearId || !courseId || !gradeId || !sectionId)
-            return res.status(400).json({ message: 'No se han completado los campos requeridos. '});
+            return res.status(400).json({message: 'No se han completado los campos requeridos. '});
 
-        const newTeacherGroup = await TeacherGroups.create({
+        const newTeacherGroup = await db.TeacherGroups.create({
             teacherAssignmentId, yearId, courseId, gradeId, sectionId
         });
 
         res.status(201).json(newTeacherGroup);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.getTeacherGroups = async (req, res) => {
     try {
-        const teacherGroups = await TeacherGroups.findAll({
+        const teacherGroups = await db.TeacherGroups.findAll({
             include: [
                 {
-                    model: TeacherAssignments,
+                    model: db.TeacherAssignments,
                     as: 'teacherassignments',
                     attributes: ['id'],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: 'persons',
                             attributes: ['id', 'names', 'lastNames', 'role']
                         },
                         {
-                            model: Years,
+                            model: db.Years,
                             as: 'years',
                             attributes: ['id', 'year']
                         },
                     ]
                 },
                 {
-                    model: Years,
+                    model: db.Years,
                     as: 'years',
                     attributes: ['id', 'year']
                 },
                 {
-                    model: Courses,
+                    model: db.Courses,
                     as: 'courses',
-                    attributes: ['id', 'course', 'descripcion']
+                    attributes: ['id', 'course', 'recurrence']
                 },
                 {
-                    model: Grades,
+                    model: db.Grades,
                     as: 'grades',
                     attributes: ['id', 'grade']
                 },
                 {
-                    model: Sections,
+                    model: db.Sections,
                     as: 'sections',
                     attributes: ['id', 'seccion']
                 }
@@ -72,7 +64,7 @@ exports.getTeacherGroups = async (req, res) => {
         res.status(200).json(teacherGroups);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
@@ -85,19 +77,19 @@ exports.getTeacherGroupsByYearAndUser = async (req, res) => {
         }
 
         // Buscar el usuario
-        const user = await Users.findByPk(userId);
+        const user = await db.Users.findByPk(userId);
         if (!user) {
             return res.status(404).json({message: "Usuario no encontrado"});
         }
 
         // Buscar la persona asociada
-        const person = await Persons.findByPk(user.personId);
+        const person = await db.Persons.findByPk(user.personId);
         if (!person) {
             return res.status(404).json({message: "Persona asociada no encontrada"});
         }
 
         // Buscar asignación docente
-        const teacherAssignment = await TeacherAssignments.findOne({
+        const teacherAssignment = await db.TeacherAssignments.findOne({
             where: {personId: person.id},
         });
 
@@ -105,44 +97,44 @@ exports.getTeacherGroupsByYearAndUser = async (req, res) => {
             return res.status(404).json({message: "No se encontró asignación de docente"});
         }
 
-        const teacherGroups = await TeacherGroups.findAll({
+        const teacherGroups = await db.TeacherGroups.findAll({
             where: {
                 teacherAssignmentId: teacherAssignment.id,
                 yearId,
             },
             include: [
                 {
-                    model: Years,
+                    model: db.Years,
                     as: "years",
                     attributes: ["id", "year"],
                 },
                 {
-                    model: Courses,
+                    model: db.Courses,
                     as: "courses",
                     attributes: ["id", "course"],
                 },
                 {
-                    model: Sections,
+                    model: db.Sections,
                     as: "sections",
                     attributes: ["id", "seccion"],
                 },
                 {
-                    model: Grades,
+                    model: db.Grades,
                     as: "grades",
                     attributes: ["id", "grade"],
                 },
                 {
-                    model: TeacherAssignments,
+                    model: db.TeacherAssignments,
                     as: "teacherassignments",
                     attributes: ["id"],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: "persons",
                             attributes: ["id", "names", "lastNames", "role"],
                         },
                         {
-                            model: Years,
+                            model: db.Years,
                             as: "years",
                             attributes: ["id", "year"],
                         },
@@ -150,27 +142,27 @@ exports.getTeacherGroupsByYearAndUser = async (req, res) => {
                 },
             ],
             attributes: ["id"],
-            order: [[{model: Grades, as: 'grades'}, 'grade', "ASC"]],
+            order: [[{model: db.Grades, as: 'grades'}, 'grade', "ASC"]],
         });
         res.status(200).json(teacherGroups);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.getTeacherGroupsByYearAndTutor = async (req, res) => {
     try {
-        const { yearId, tutorId } = req.params;
+        const {yearId, tutorId} = req.params;
 
         if (!tutorId)
-            return res.status(400).json({ message: "El identificador del grupo de tutor es requerido." });
+            return res.status(400).json({message: "El identificador del grupo de tutor es requerido."});
 
-        const group = await Tutors.findByPk(tutorId);
-        if (!group) 
-            return res.status(404).json({ message: "Grupo de tutor no encontrado." });
+        const group = await db.Tutors.findByPk(tutorId);
+        if (!group)
+            return res.status(404).json({message: "Grupo de tutor no encontrado."});
 
-        const teacherGroups = await TeacherGroups.findAll({
+        const teacherGroups = await db.TeacherGroups.findAll({
             where: {
                 gradeId: group.gradeId,
                 sectionId: group.sectionId,
@@ -178,37 +170,37 @@ exports.getTeacherGroupsByYearAndTutor = async (req, res) => {
             },
             include: [
                 {
-                    model: Years,
+                    model: db.Years,
                     as: "years",
                     attributes: ["id", "year"],
                 },
                 {
-                    model: Courses,
+                    model: db.Courses,
                     as: "courses",
                     attributes: ["id", "course"],
                 },
                 {
-                    model: Sections,
+                    model: db.Sections,
                     as: "sections",
                     attributes: ["id", "seccion"],
                 },
                 {
-                    model: Grades,
+                    model: db.Grades,
                     as: "grades",
                     attributes: ["id", "grade"],
                 },
                 {
-                    model: TeacherAssignments,
+                    model: db.TeacherAssignments,
                     as: "teacherassignments",
                     attributes: ["id"],
                     include: [
                         {
-                            model: Persons,
+                            model: db.Persons,
                             as: "persons",
                             attributes: ["id", "names", "lastNames", "role"],
                         },
                         {
-                            model: Years,
+                            model: db.Years,
                             as: "years",
                             attributes: ["id", "year"],
                         },
@@ -216,23 +208,23 @@ exports.getTeacherGroupsByYearAndTutor = async (req, res) => {
                 },
             ],
             attributes: ["id"],
-            order: [[{model: Grades, as: 'grades'}, 'grade', "ASC"]],
+            order: [[{model: db.Grades, as: 'grades'}, 'grade', "ASC"]],
         });
         res.status(200).json(teacherGroups);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.updateTeacherGroup = async (req, res) => {
-    const { id } = req.params;
-    const { teacherAssignmentId, yearId, courseId, gradeId, sectionId } = req.body;
+    const {id} = req.params;
+    const {teacherAssignmentId, yearId, courseId, gradeId, sectionId} = req.body;
     try {
-        const teacherGroups = await TeacherGroups.findByPk(id);
+        const teacherGroups = await db.TeacherGroups.findByPk(id);
 
         if (!teacherGroups)
-            return res.status(404).json({ message: 'Grupo de docente no encontrado.' });
+            return res.status(404).json({message: 'Grupo de docente no encontrado.'});
 
         teacherGroups.teacherAssignmentId = teacherAssignmentId;
         teacherGroups.yearId = yearId;
@@ -244,25 +236,25 @@ exports.updateTeacherGroup = async (req, res) => {
         res.status(200).json(teacherGroups);
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
 
 exports.deleteTeacherGroup = async (req, res) => {
     try {
-        const { id } = req.params;
+        const {id} = req.params;
 
-        if (!id || isNaN(id)) 
-            return res.status(400).json({ message: 'Identificador inválido o no proporcionado.' });
+        if (!id || isNaN(id))
+            return res.status(400).json({message: 'Identificador inválido o no proporcionado.'});
 
-        const deleted = await TeacherGroups.destroy({ where: { id } });
+        const deleted = await db.TeacherGroups.destroy({where: {id}});
 
         if (deleted === 0)
-            return res.status(404).json({ message: 'Grupo de docente no encontrado. '});
+            return res.status(404).json({message: 'Grupo de docente no encontrado. '});
 
-        res.status(200).json({ message: 'Grupo de docente eliminado correctamente.' });
+        res.status(200).json({message: 'Grupo de docente eliminado correctamente.'});
     } catch (error) {
         console.error(error.message);
-        res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
+        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
     }
 }
