@@ -1,4 +1,4 @@
-require('dotenv').config({quiet: true});
+require('dotenv').config({ quiet: true });
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const express = require('express');
@@ -11,7 +11,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const authRoutes = require('./routes/auth.routes');
-const errorHandler = require('./middlewares/error.middleware');
+
+const appRoutes = require('./routes/index');
 
 const corsOptions = {
     origin: (origin, callback) => {
@@ -31,23 +32,23 @@ const corsOptions = {
     credentials: true,
 };
 
-const appRoutes = require('./routes/index');
-
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
-    message: {error: "Demasiados intentos de ingreso, espera unos minutos."},
+    message: { error: "Demasiados intentos de ingreso, espera unos minutos." },
 });
 
+// Middlewares globales
 app.use(helmet());
 app.use(express.json());
 app.use(cors(corsOptions));
 app.use(morgan('combined'));
 
+// Rutas de auth + limitador
 app.use("/api/auth/login", loginLimiter);
 app.use("/api/auth", authRoutes);
-app.use(errorHandler);
 
+// Rutas del resto de módulos
 app.use('/api', appRoutes.AnnualAverageRoutes);
 app.use('/api', appRoutes.AttendancesRoutes);
 app.use('/api', appRoutes.CoursesRoutes);
@@ -74,19 +75,26 @@ app.use('/api', appRoutes.UsersRoutes);
 app.use('/api', appRoutes.YearsRoutes);
 
 app.get('/', (req, res) => {
-    res.send('Bienvenido')
+    res.send('Bienvenido');
 });
 
-sequelize.authenticate().then(() => {
-    console.log('Conexión a la base de datos exitosa.');
-    return Promise.resolve();
-}).then(() => {
-    console.log('Base de datos sincronizada.');
-    if (process.env.NODE_ENV !== 'test') {
-        app.listen(PORT, () => {
-            console.log(`Servidor corriendo en http://localhost:${PORT}`);
-        });
-    }
-}).catch(err => {
-    console.error('Error al conectar con la base de datos: ', err.message);
-});
+const errorHandler = require('./middlewares/error.middleware');
+
+// Conexión a la base de datos y levantado del servidor
+sequelize
+    .authenticate()
+    .then(() => {
+        console.log('Conexión a la base de datos exitosa.');
+        console.log('Base de datos sincronizada.');
+
+        if (process.env.NODE_ENV !== 'test') {
+            app.listen(PORT, () => {
+                console.log(`Servidor corriendo en http://localhost:${PORT}`);
+            });
+        }
+    })
+    .catch(err => {
+        console.error('Error al conectar con la base de datos: ', err.message);
+    });
+
+module.exports = app;

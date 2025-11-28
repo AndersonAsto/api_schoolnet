@@ -3,7 +3,7 @@ const db = require('../models');
 function getWeekNumberMondayFirst(date) {
     const year = date.getUTCFullYear();
     const firstDayOfYear = new Date(Date.UTC(year, 0, 1));
-    const dayOfWeek = (firstDayOfYear.getUTCDay() + 6) % 7; // lunes=0
+    const dayOfWeek = (firstDayOfYear.getUTCDay() + 6) % 7;
     const firstMonday = new Date(firstDayOfYear);
     firstMonday.setUTCDate(firstDayOfYear.getUTCDate() + (dayOfWeek === 0 ? 0 : 7 - dayOfWeek));
 
