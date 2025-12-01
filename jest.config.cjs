@@ -6,4 +6,5 @@ module.exports = {
     '^.+\\.js$': 'babel-jest',
   },
   setupFiles: ['<rootDir>/test/setupEnv.js'],
+  setupFilesAfterEnv: ['<rootDir>/test/jest.teardown.js'],
 };

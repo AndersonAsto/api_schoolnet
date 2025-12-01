@@ -1,7 +1,7 @@
 // test/integration.test/schoolDaysBySchedule.integration.test.js
 const request = require('supertest');
 const app = require('../../server');
-const db = require('../../models');
+const db = require('../../config/db.config');
 
 describe('SchoolDaysBySchedule Endpoints - Integration', () => {
   let skipTests = false;
@@ -24,7 +24,7 @@ describe('SchoolDaysBySchedule Endpoints - Integration', () => {
     }
   });
 
-  /*
+  
   afterAll(async () => {
     try {
       await db.sequelize.close();
@@ -32,7 +32,6 @@ describe('SchoolDaysBySchedule Endpoints - Integration', () => {
       // ignore
     }
   });
-  */
 
   const safeTest = (fn) => {
     return async () => {
