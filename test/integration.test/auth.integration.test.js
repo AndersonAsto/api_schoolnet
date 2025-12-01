@@ -1,3 +1,4 @@
+// test/integration.test/auth.integration.test.js
 const request = require('supertest');
 const app = require('../../server');
 const db = require('../../models');
@@ -9,23 +10,27 @@ describe('Auth Endpoints - Integration Tests', () => {
 
   const testUsername = 'testuser_auth_integration';
   const plainPassword = 'testpass';
+  const testEmail = 'testuser_auth_integration@example.com';
 
   beforeAll(async () => {
-    // Aseguramos que usamos la BD de test y creamos un esquema limpio
-    await db.sequelize.sync({ force: true });
+    // Solo comprobar conexión
+    await db.sequelize.authenticate();
+
+    // Limpiar basura previa de este mismo test
+    await db.Users.destroy({ where: { userName: testUsername } });
+    await db.Persons.destroy({ where: { email: testEmail } });
 
     const person = await db.Persons.create({
       names: 'Test',
       lastNames: 'User',
       dni: '00000001',
       phone: '987654321',
-      email: 'testuser@example.com',
+      email: testEmail,
       role: 'Administrador',
       status: true,
     });
 
-    // OJO: usamos passwordHash con la contraseña en plano,
-    // el hook beforeCreate del modelo Users se encarga de hashearla.
+    // El hook beforeCreate se encarga de hashear passwordHash
     testUser = await db.Users.create({
       userName: testUsername,
       passwordHash: plainPassword,
@@ -36,6 +41,10 @@ describe('Auth Endpoints - Integration Tests', () => {
   });
 
   afterAll(async () => {
+    // Si quieres puedes limpiar lo que creaste
+    await db.Users.destroy({ where: { userName: testUsername } });
+    await db.Persons.destroy({ where: { email: testEmail } });
+
     await db.sequelize.close();
   });
 
@@ -47,7 +56,6 @@ describe('Auth Endpoints - Integration Tests', () => {
         .send({ password: '123456' });
 
       expect(res.status).toBe(400);
-      // Los validators de express devuelven un array "errors"
       expect(res.body).toHaveProperty('errors');
       expect(Array.isArray(res.body.errors)).toBe(true);
       expect(res.body.errors.length).toBeGreaterThan(0);
@@ -115,8 +123,6 @@ describe('Auth Endpoints - Integration Tests', () => {
     });
 
     it('debe devolver nuevo access token si refreshToken es válido', async () => {
-      // Nos aseguramos que refreshToken exista por si este describe corre
-      // antes que el último test del login (por orden de Jest)
       if (!refreshToken) {
         const loginRes = await request(app)
           .post('/api/auth/login')
@@ -148,7 +154,6 @@ describe('Auth Endpoints - Integration Tests', () => {
     });
 
     it('debe devolver ok true si hay Authorization Bearer', async () => {
-      // Igual, nos aseguramos que haya accessToken
       if (!accessToken) {
         const loginRes = await request(app)
           .post('/api/auth/login')
