@@ -164,8 +164,12 @@ describe('Grades Controller - Unit Tests', () => {
       expect(mockGradeInstance.grade).toBe('Primero Actualizado');
       expect(mockGradeInstance.save).toHaveBeenCalled();
       expect(res.statusCode).toBe(200);
+
       const data = res._getJSONData();
-      expect(data).toEqual(mockGradeInstance);
+      expect(data).toMatchObject({
+        id: 1,
+        grade: 'Primero Actualizado',
+      });
     });
 
     it('debe manejar errores internos con 500', async () => {

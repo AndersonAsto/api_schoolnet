@@ -1,0 +1,58 @@
+stages:
+  - test
+
+image: node:18
+
+services:
+  - name: mysql:8
+    alias: mysql
+
+variables:
+  # Entorno de test
+  NODE_ENV: test
+
+  # Variables de configuración
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_DIALECT: mysql
+  DB_TIMEZONE: "-05:00"
+
+  DB_USER: ci_user
+  DB_PASSWORD: ci_password
+  DB_NAME: schoolnetdb
+  DB_TEST_NAME: schoolnet_testdb
+
+  # Variables propias del contenedor MySQL
+  MYSQL_ROOT_PASSWORD: root_password
+  MYSQL_USER: ci_user
+  MYSQL_PASSWORD: ci_password
+  MYSQL_DATABASE: schoolnet_testdb
+
+cache:
+  paths:
+    - node_modules/
+
+test:
+  stage: test
+  script:
+    - node -v
+    - npm -v
+    - npm ci
+
+    # Esperar a la ejecución de MYSQL
+    - echo "Esperando a MySQL..."
+    - >
+      for i in `seq 1 30`;
+      do
+        nc -z mysql 3306 && echo "MySQL está arriba" && break;
+        echo "MySQL aún no listo ($i)...";
+        sleep 2;
+      done
+
+    # Sequelize CLI:
+    - npx sequelize db:migrate || echo "Sin migraciones"
+    - npx sequelize db:seed:all || echo "Sin seeds"
+
+    # Pruebas unitarias y de integración
+    - npm run test:unit
+    - npm run test:integration

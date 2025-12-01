@@ -269,7 +269,14 @@ describe('Incidents Controller - Unit Tests', () => {
       expect(mockInstance.save).toHaveBeenCalled();
       expect(res.statusCode).toBe(200);
       const data = res._getJSONData();
-      expect(data).toEqual(mockInstance);
+
+      expect(data).toMatchObject({
+        id: 1,
+        studentId: 10,
+        scheduleId: 20,
+        schoolDayId: 30,
+        incidentDetail: 'Actualizada',
+      });
     });
 
     it('debe manejar errores internos con 500', async () => {

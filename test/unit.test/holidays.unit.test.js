@@ -188,13 +188,22 @@ describe('Holidays Controller - Unit Tests', () => {
 
       await holidaysController.updateHoliday(req, res);
 
+      // Verificas que el modelo mock se actualizó
       expect(db.Holidays.findByPk).toHaveBeenCalledWith('1');
       expect(mockHolidayInstance.yearId).toBe(2);
       expect(mockHolidayInstance.holiday).toBe('2025-02-14');
       expect(mockHolidayInstance.save).toHaveBeenCalled();
+
+      // Verificas la respuesta HTTP
       expect(res.statusCode).toBe(200);
       const data = res._getJSONData();
-      expect(data).toEqual(mockHolidayInstance);
+
+      // Solo comparas las propiedades de datos
+      expect(data).toMatchObject({
+        id: 1,
+        yearId: 2,
+        holiday: '2025-02-14',
+      });
     });
 
     it('debe manejar errores internos con 500', async () => {

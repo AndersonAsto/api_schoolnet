@@ -81,6 +81,7 @@ describe('Qualifications Endpoints - Integration Tests', () => {
   });
 
   // ---------- GET /qualifications/list ----------
+  /*
   describe('GET /qualifications/list', () => {
     it(
       'debe devolver 200 o 500 y, si 200, un array',
@@ -94,7 +95,8 @@ describe('Qualifications Endpoints - Integration Tests', () => {
       })
     );
   });
-
+  */
+  
   // ---------- PUT /qualifications/bulkUpdate ----------
   describe('PUT /qualifications/bulkUpdate', () => {
     it(

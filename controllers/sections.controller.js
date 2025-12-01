@@ -6,7 +6,7 @@ exports.createSection = async (req, res) => {
         const {seccion} = req.body;
 
         if (!seccion)
-            res.status(400).error('No ha completado los campos requeridos');
+            return res.status(400).json({ messsage: 'No ha completado los campos requeridos' });
 
         const newSection = await db.Sections.create({seccion});
         res.status(201).json(newSection);

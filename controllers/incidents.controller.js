@@ -134,7 +134,7 @@ exports.getIncidentsByScheduleAndStudent = async (req, res) => {
             where: {studentId, scheduleId},
             include: [
                 {
-                    model: db.StudentsEnrollments,
+                    model: db.StudentEnrollments,
                     as: 'students',
                     include: [
                         {
@@ -180,7 +180,7 @@ exports.getIncidentsByScheduleAndStudent = async (req, res) => {
             order: [[{model: db.SchoolDays, as: 'schooldays'}, 'teachingDay', 'ASC']]
         });
 
-        res.json(incidents);
+        res.status(200).json(incidents);
     } catch (error) {
         console.error(error.message);
         res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});

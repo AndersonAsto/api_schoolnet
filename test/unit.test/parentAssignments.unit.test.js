@@ -239,15 +239,25 @@ describe('ParentAssignments Controller - Unit Tests', () => {
 
       await controller.updateParentAssignment(req, res);
 
+      // Verificas que el mock fue actualizado
       expect(mockRecord.yearId).toBe(2);
       expect(mockRecord.personId).toBe(4);
       expect(mockRecord.studentId).toBe(5);
       expect(mockRecord.relationshipType).toBe('TUTOR');
       expect(mockRecord.save).toHaveBeenCalled();
 
+      // Verificas la respuesta HTTP
       expect(res.statusCode).toBe(200);
       const data = res._getJSONData();
-      expect(data).toEqual(mockRecord);
+
+      // Verificas solo los datos (sin la función save)
+      expect(data).toMatchObject({
+        id: 1,
+        yearId: 2,
+        personId: 4,
+        studentId: 5,
+        relationshipType: 'TUTOR',
+      });
     });
 
     it('debe manejar error interno con 500', async () => {

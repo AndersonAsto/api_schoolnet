@@ -198,7 +198,6 @@ describe('Persons Controller - Unit Tests', () => {
         role: 'Administrador',
         save: jest.fn().mockResolvedValue(true),
       };
-
       db.Persons.findByPk.mockResolvedValue(mockPerson);
 
       const req = httpMocks.createRequest({
@@ -218,6 +217,7 @@ describe('Persons Controller - Unit Tests', () => {
 
       await controller.updatePerson(req, res);
 
+      // Verificas que el modelo en memoria se actualizó
       expect(mockPerson.names).toBe('Nuevo');
       expect(mockPerson.lastNames).toBe('Nombre');
       expect(mockPerson.dni).toBe('87654321');
@@ -226,9 +226,20 @@ describe('Persons Controller - Unit Tests', () => {
       expect(mockPerson.role).toBe('Docente');
       expect(mockPerson.save).toHaveBeenCalled();
 
+      // Verificas la respuesta HTTP
       expect(res.statusCode).toBe(200);
       const data = res._getJSONData();
-      expect(data).toEqual(mockPerson);
+
+      // Solo comparas los campos de datos
+      expect(data).toMatchObject({
+        id: 1,
+        names: 'Nuevo',
+        lastNames: 'Nombre',
+        dni: '87654321',
+        email: 'nuevo@example.com',
+        phone: '912345678',
+        role: 'Docente',
+      });
     });
 
     it('debe manejar error interno con 500', async () => {

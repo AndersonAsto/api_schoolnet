@@ -24,6 +24,7 @@ describe('SchoolDaysBySchedule Endpoints - Integration', () => {
     }
   });
 
+  /*
   afterAll(async () => {
     try {
       await db.sequelize.close();
@@ -31,6 +32,7 @@ describe('SchoolDaysBySchedule Endpoints - Integration', () => {
       // ignore
     }
   });
+  */
 
   const safeTest = (fn) => {
     return async () => {

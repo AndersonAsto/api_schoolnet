@@ -206,7 +206,7 @@ exports.getTutorsByYear = async (req, res) => {
     try {
         const {yearId} = req.params;
         if (!yearId)
-            res.status(404).json('No ha seleccioando un año.');
+            return res.status(404).json('No ha seleccioando un año.');
 
         const tutors = await db.Tutors.findAll({
             where: {yearId},
