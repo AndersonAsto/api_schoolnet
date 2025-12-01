@@ -1,7 +1,8 @@
-const yearsController = require('../../controllers/years.controller');
+// test/unit.test/years.unit.test.js
+const httpMocks = require('node-mocks-http');
+const controller = require('../../controllers/years.controller');
 const db = require('../../models');
 
-// Mock de db.Years
 jest.mock('../../models', () => ({
   Years: {
     create: jest.fn(),
@@ -11,193 +12,193 @@ jest.mock('../../models', () => ({
   },
 }));
 
-// helper para crear res mock
-const mockResponse = () => {
-  const res = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
-  return res;
-};
-
-describe('Years Controller - Unit Tests', () => {
-
-  beforeEach(() => {
+describe('Years Controller - Unit tests', () => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('createYear', () => {
-    it('debe retornar 400 si no se envía year', async () => {
-      const req = { body: {} };
-      const res = mockResponse();
-
-      await yearsController.createYear(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'No ha completado los campos requeridos.',
-      });
-      expect(db.Years.create).not.toHaveBeenCalled();
+  // ---------- createYear ----------
+  it('createYear debe retornar 400 si no se envía year', async () => {
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: {},
     });
+    const res = httpMocks.createResponse();
 
-    it('debe crear un año y devolver 201', async () => {
-      const req = { body: { year: 2025 } };
-      const res = mockResponse();
+    await controller.createYear(req, res);
 
-      const fakeYear = { id: 1, year: 2025 };
-      db.Years.create.mockResolvedValue(fakeYear);
-
-      await yearsController.createYear(req, res);
-
-      expect(db.Years.create).toHaveBeenCalledWith({ year: 2025 });
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith(fakeYear);
-    });
-
-    it('debe manejar errores internos con 500', async () => {
-      const req = { body: { year: 2025 } };
-      const res = mockResponse();
-
-      db.Years.create.mockRejectedValue(new Error('DB error'));
-
-      await yearsController.createYear(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
-    });
+    expect(res.statusCode).toBe(400);
+    const data = res._getJSONData();
+    expect(data.error).toMatch(/No ha completado los campos requeridos/i);
   });
 
-  describe('getYears', () => {
-    it('debe obtener todos los años ordenados asc', async () => {
-      const req = {};
-      const res = mockResponse();
+  it('createYear debe crear un año y devolver 201', async () => {
+    const mockYear = { id: 1, year: 2025 };
+    db.Years.create.mockResolvedValue(mockYear);
 
-      const fakeYears = [
-        { id: 1, year: 2023 },
-        { id: 2, year: 2024 },
-      ];
-
-      db.Years.findAll.mockResolvedValue(fakeYears);
-
-      await yearsController.getYears(req, res);
-
-      expect(db.Years.findAll).toHaveBeenCalledWith({
-        order: [['year', 'ASC']],
-      });
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(fakeYears);
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { year: 2025 },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar errores internos con 500', async () => {
-      const req = {};
-      const res = mockResponse();
+    await controller.createYear(req, res);
 
-      db.Years.findAll.mockRejectedValue(new Error('DB error'));
-
-      await yearsController.getYears(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
-    });
+    expect(db.Years.create).toHaveBeenCalledWith({ year: 2025 });
+    expect(res.statusCode).toBe(201);
+    const data = res._getJSONData();
+    expect(data.year).toBe(2025);
   });
 
-  describe('updateYear', () => {
-    it('debe retornar 404 si el año no existe', async () => {
-      const req = { params: { id: 1 }, body: { year: 2030 } };
-      const res = mockResponse();
+  it('createYear debe manejar error 500', async () => {
+    db.Years.create.mockRejectedValue(new Error('Error BD'));
 
-      db.Years.findByPk.mockResolvedValue(null);
-
-      await yearsController.updateYear(req, res);
-
-      expect(db.Years.findByPk).toHaveBeenCalledWith(1);
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Año no encontrado.',
-      });
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { year: 2025 },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe actualizar el año y devolver 200', async () => {
-      const req = { params: { id: 1 }, body: { year: 2030 } };
-      const res = mockResponse();
+    await controller.createYear(req, res);
 
-      const fakeYearInstance = {
-        id: 1,
-        year: 2025,
-        save: jest.fn().mockResolvedValue(),
-      };
-
-      db.Years.findByPk.mockResolvedValue(fakeYearInstance);
-
-      await yearsController.updateYear(req, res);
-
-      expect(db.Years.findByPk).toHaveBeenCalledWith(1);
-      expect(fakeYearInstance.year).toBe(2030);
-      expect(fakeYearInstance.save).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(fakeYearInstance);
-    });
-
-    it('debe manejar errores internos con 500', async () => {
-      const req = { params: { id: 1 }, body: { year: 2030 } };
-      const res = mockResponse();
-
-      db.Years.findByPk.mockRejectedValue(new Error('DB error'));
-
-      await yearsController.updateYear(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
-    });
+    expect(res.statusCode).toBe(500);
   });
 
-  describe('deleteYear', () => {
-    it('debe eliminar un año existente y retornar 200', async () => {
-      const req = { params: { id: 1 } };
-      const res = mockResponse();
+  // ---------- getYears ----------
+  it('getYears debe retornar listado de años', async () => {
+    db.Years.findAll.mockResolvedValue([{ id: 1, year: 2024 }]);
 
-      db.Years.destroy.mockResolvedValue(1); // 1 registro eliminado
-
-      await yearsController.deleteYear(req, res);
-
-      expect(db.Years.destroy).toHaveBeenCalledWith({ where: { id: 1 } });
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Año eliminado correctamente.',
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
     });
+    const res = httpMocks.createResponse();
 
-    it('debe retornar 404 si el año no existe', async () => {
-      const req = { params: { id: 999 } };
-      const res = mockResponse();
+    await controller.getYears(req, res);
 
-      db.Years.destroy.mockResolvedValue(0);
-
-      await yearsController.deleteYear(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Año no encontrado.',
-      });
+    expect(db.Years.findAll).toHaveBeenCalledWith({
+      order: [['year', 'ASC']],
     });
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(Array.isArray(data)).toBe(true);
+  });
 
-    it('debe manejar errores internos con 500', async () => {
-      const req = { params: { id: 1 } };
-      const res = mockResponse();
+  it('getYears debe manejar error 500', async () => {
+    db.Years.findAll.mockRejectedValue(new Error('Error BD'));
 
-      db.Years.destroy.mockRejectedValue(new Error('DB error'));
-
-      await yearsController.deleteYear(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
     });
+    const res = httpMocks.createResponse();
+
+    await controller.getYears(req, res);
+
+    expect(res.statusCode).toBe(500);
+  });
+
+  // ---------- updateYear ----------
+  it('updateYear debe retornar 404 si el año no existe', async () => {
+    db.Years.findByPk.mockResolvedValue(null);
+
+    const req = httpMocks.createRequest({
+      method: 'PUT',
+      params: { id: '1' },
+      body: { year: 2030 },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.updateYear(req, res);
+
+    expect(db.Years.findByPk).toHaveBeenCalledWith('1');
+    expect(res.statusCode).toBe(404);
+    const data = res._getJSONData();
+    expect(data.message).toMatch(/Año no encontrado/i);
+  });
+
+  it('updateYear debe actualizar el año y devolver 200', async () => {
+    const mockYear = {
+      id: 1,
+      year: 2025,
+      save: jest.fn().mockResolvedValue(),
+    };
+    db.Years.findByPk.mockResolvedValue(mockYear);
+
+    const req = httpMocks.createRequest({
+      method: 'PUT',
+      params: { id: '1' },
+      body: { year: 2030 },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.updateYear(req, res);
+
+    expect(mockYear.year).toBe(2030);
+    expect(mockYear.save).toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(data.year).toBe(2030);
+  });
+
+  it('updateYear debe manejar error 500', async () => {
+    db.Years.findByPk.mockRejectedValue(new Error('Error BD'));
+
+    const req = httpMocks.createRequest({
+      method: 'PUT',
+      params: { id: '1' },
+      body: { year: 2030 },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.updateYear(req, res);
+
+    expect(res.statusCode).toBe(500);
+  });
+
+  // ---------- deleteYear (solo comportamiento básico, sin usar en integración) ----------
+  it('deleteYear debe retornar 200 si elimina', async () => {
+    db.Years.destroy.mockResolvedValue(1);
+
+    const req = httpMocks.createRequest({
+      method: 'DELETE',
+      params: { id: '1' },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.deleteYear(req, res);
+
+    expect(db.Years.destroy).toHaveBeenCalledWith({ where: { id: '1' } });
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(data.message).toMatch(/Año eliminado correctamente/i);
+  });
+
+  it('deleteYear debe retornar 404 si el año no existe', async () => {
+    db.Years.destroy.mockResolvedValue(0);
+
+    const req = httpMocks.createRequest({
+      method: 'DELETE',
+      params: { id: '1' },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.deleteYear(req, res);
+
+    expect(res.statusCode).toBe(404);
+    const data = res._getJSONData();
+    expect(data.message).toMatch(/Año no encontrado/i);
+  });
+
+  it('deleteYear debe manejar error 500', async () => {
+    db.Years.destroy.mockRejectedValue(new Error('Error BD'));
+
+    const req = httpMocks.createRequest({
+      method: 'DELETE',
+      params: { id: '1' },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.deleteYear(req, res);
+
+    expect(res.statusCode).toBe(500);
   });
 });

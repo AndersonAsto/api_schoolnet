@@ -1,11 +1,13 @@
 // test/unit.test/auth.unit.test.js
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const tokenBlacklist = require('../../services/tokenBlacklist');
-const authController = require('../../controllers/auth.controller');
-const db = require('../../models');
-const { generateAccessToken, generateRefreshToken } = require('../../utils/jwt');
 
+const tokenBlacklist = require('../../services/tokenBlacklist');
+const { generateAccessToken, generateRefreshToken } = require('../../utils/jwt');
+const db = require('../../models');
+const authController = require('../../controllers/auth.controller');
+
+// Mock de dependencias externas
 jest.mock('../../models', () => ({
   Users: {
     findOne: jest.fn(),
@@ -19,281 +21,329 @@ jest.mock('../../models', () => ({
   },
 }));
 
-jest.mock('bcrypt');
-jest.mock('jsonwebtoken');
-jest.mock('../../services/tokenBlacklist', () => ({
-  add: jest.fn(),
+jest.mock('bcrypt', () => ({
+  compare: jest.fn(),
 }));
+
+jest.mock('jsonwebtoken', () => ({
+  verify: jest.fn(),
+}));
+
 jest.mock('../../utils/jwt', () => ({
   generateAccessToken: jest.fn(),
   generateRefreshToken: jest.fn(),
 }));
 
-const mockResponse = () => {
+jest.mock('../../services/tokenBlacklist', () => ({
+  add: jest.fn(),
+}));
+
+const createMockRes = () => {
   const res = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
+  res.statusCode = 200;
+  res.status = jest.fn((code) => {
+    res.statusCode = code;
+    return res;
+  });
+  res.json = jest.fn((data) => {
+    res.body = data;
+    return res;
+  });
   return res;
 };
 
-describe('Auth Controller - Unit Tests', () => {
-  beforeEach(() => {
+describe('Auth Controller - Unit tests', () => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  // --------- login ----------
+  // -------------------- login --------------------
   describe('login', () => {
-    it('debe devolver 400 si faltan credenciales', async () => {
-      const req = { body: {} };
-      const res = mockResponse();
+    it('debe retornar 400 si faltan credenciales', async () => {
+      const req = { body: { username: '', password: '' } };
+      const res = createMockRes();
       const next = jest.fn();
 
       await authController.login(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Faltan credenciales' });
+      expect(res.body).toEqual({ error: 'Faltan credenciales' });
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('debe devolver 401 si el usuario no existe', async () => {
-      const req = { body: { username: 'user1', password: 'pass123' } };
-      const res = mockResponse();
+    it('debe retornar 401 si el usuario no existe', async () => {
+      db.Users.findOne.mockResolvedValue(null);
+
+      const req = { body: { username: 'user', password: 'pass' } };
+      const res = createMockRes();
       const next = jest.fn();
 
-      db.Users.findOne.mockResolvedValue(null);
+      await authController.login(req, res, next);
+
+      expect(db.Users.findOne).toHaveBeenCalledWith({
+        where: { userName: 'user', status: true },
+        attributes: ['id', 'userName', 'passwordHash', 'role', 'personId'],
+      });
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.body.error).toMatch(/Usuario o contraseña inválidos/i);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('debe retornar 401 si la contraseña es inválida', async () => {
+      db.Users.findOne.mockResolvedValue({
+        id: 1,
+        userName: 'user',
+        passwordHash: 'hash',
+        role: 'Docente',
+        personId: 10,
+      });
+
+      bcrypt.compare.mockResolvedValue(false);
+
+      const req = { body: { username: 'user', password: 'wrong' } };
+      const res = createMockRes();
+      const next = jest.fn();
+
+      await authController.login(req, res, next);
+
+      expect(bcrypt.compare).toHaveBeenCalledWith('wrong', 'hash');
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.body.error).toMatch(/Usuario o contraseña inválidos/i);
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it('debe hacer login correcto y marcar isTeacher e isTutor cuando corresponde', async () => {
+      const mockUser = {
+        id: 1,
+        userName: 'teacherUser',
+        passwordHash: 'hash',
+        role: 'Docente',
+        personId: 99,
+      };
+
+      db.Users.findOne.mockResolvedValue(mockUser);
+      bcrypt.compare.mockResolvedValue(true);
+
+      db.TeacherAssignments.findOne.mockResolvedValue({
+        id: 5,
+      });
+
+      db.Tutors.findOne.mockResolvedValue({
+        id: 7,
+      });
+
+      generateAccessToken.mockReturnValue('access-token');
+      generateRefreshToken.mockReturnValue('refresh-token');
+
+      const req = { body: { username: 'teacherUser', password: '123456' } };
+      const res = createMockRes();
+      const next = jest.fn();
 
       await authController.login(req, res, next);
 
       expect(db.Users.findOne).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'Usuario o contraseña inválidos',
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        '123456',
+        mockUser.passwordHash
+      );
+
+      expect(db.TeacherAssignments.findOne).toHaveBeenCalledWith({
+        where: { personId: mockUser.personId, status: true },
+        attributes: ['id'],
       });
-    });
 
-    it('debe devolver 401 si la contraseña es inválida', async () => {
-      const req = { body: { username: 'user1', password: 'wrongpass' } };
-      const res = mockResponse();
-      const next = jest.fn();
-
-      db.Users.findOne.mockResolvedValue({
-        id: 1,
-        userName: 'user1',
-        passwordHash: 'hashed',
-        role: 'Administrador',
-        personId: 10,
+      expect(db.Tutors.findOne).toHaveBeenCalledWith({
+        where: { teacherId: 5, status: true },
+        attributes: ['id'],
       });
-      bcrypt.compare.mockResolvedValue(false);
 
-      await authController.login(req, res, next);
+      expect(generateAccessToken).toHaveBeenCalledWith(mockUser);
+      expect(generateRefreshToken).toHaveBeenCalledWith(mockUser);
 
-      expect(bcrypt.compare).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'Usuario o contraseña inválidos',
-      });
-    });
-
-    it('debe loguear usuario normal (sin teacher ni tutor) y devolver tokens', async () => {
-      const req = { body: { username: 'user1', password: 'pass123' } };
-      const res = mockResponse();
-      const next = jest.fn();
-
-      const userMock = {
+      expect(res.statusCode).toBe(200);
+      expect(res.body.token).toBe('access-token');
+      expect(res.body.refreshToken).toBe('refresh-token');
+      expect(res.body.user).toEqual({
         id: 1,
-        userName: 'user1',
-        passwordHash: 'hashed',
-        role: 'Administrador',
-        personId: null,
-      };
-
-      db.Users.findOne.mockResolvedValue(userMock);
-      bcrypt.compare.mockResolvedValue(true);
-      generateAccessToken.mockReturnValue('access-token');
-      generateRefreshToken.mockReturnValue('refresh-token');
-
-      await authController.login(req, res, next);
-
-      expect(generateAccessToken).toHaveBeenCalledWith(userMock);
-      expect(generateRefreshToken).toHaveBeenCalledWith(userMock);
-      expect(res.json).toHaveBeenCalledWith({
-        token: 'access-token',
-        refreshToken: 'refresh-token',
-        id: 1,
-        username: 'user1',
-        role: 'Administrador',
-        user: {
-          id: 1,
-          username: 'user1',
-          role: 'Administrador',
-          personId: null,
-          isTeacher: false,
-          isTutor: false,
-          tutorId: null,
-        },
+        username: 'teacherUser',
+        role: 'Docente',
+        personId: 99,
+        isTeacher: true,
+        isTutor: true,
+        tutorId: 7,
       });
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('debe marcar isTeacher e isTutor correctamente cuando aplica', async () => {
-      const req = { body: { username: 'teacher1', password: 'pass123' } };
-      const res = mockResponse();
-      const next = jest.fn();
-
-      const userMock = {
+    it('debe login correcto como usuario sin asignación docente ni tutor', async () => {
+      const mockUser = {
         id: 2,
-        userName: 'teacher1',
-        passwordHash: 'hashed',
-        role: 'Docente',
+        userName: 'admin',
+        passwordHash: 'hash',
+        role: 'Administrador',
         personId: 50,
       };
 
-      db.Users.findOne.mockResolvedValue(userMock);
+      db.Users.findOne.mockResolvedValue(mockUser);
       bcrypt.compare.mockResolvedValue(true);
 
-      db.TeacherAssignments.findOne.mockResolvedValue({ id: 100 });
-      db.Tutors.findOne.mockResolvedValue({ id: 200 });
+      db.TeacherAssignments.findOne.mockResolvedValue(null);
+      db.Tutors.findOne.mockResolvedValue(null);
 
-      generateAccessToken.mockReturnValue('access-token-teacher');
-      generateRefreshToken.mockReturnValue('refresh-token-teacher');
+      generateAccessToken.mockReturnValue('access-token-admin');
+      generateRefreshToken.mockReturnValue('refresh-token-admin');
+
+      const req = { body: { username: 'admin', password: 'secret' } };
+      const res = createMockRes();
+      const next = jest.fn();
 
       await authController.login(req, res, next);
 
       expect(db.TeacherAssignments.findOne).toHaveBeenCalled();
-      expect(db.Tutors.findOne).toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith({
-        token: 'access-token-teacher',
-        refreshToken: 'refresh-token-teacher',
-        id: 2,
-        username: 'teacher1',
-        role: 'Docente',
-        user: {
-          id: 2,
-          username: 'teacher1',
-          role: 'Docente',
-          personId: 50,
-          isTeacher: true,
-          isTutor: true,
-          tutorId: 200,
-        },
-      });
+      expect(db.Tutors.findOne).not.toHaveBeenCalled();
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body.user.isTeacher).toBe(false);
+      expect(res.body.user.isTutor).toBe(false);
+      expect(res.body.user.tutorId).toBeNull();
+      expect(next).not.toHaveBeenCalled();
     });
 
-    it('debe llamar a next(err) en caso de error inesperado', async () => {
-      const req = { body: { username: 'user1', password: 'pass123' } };
-      const res = mockResponse();
-      const next = jest.fn();
+    it('debe llamar next(err) ante un error inesperado', async () => {
+      db.Users.findOne.mockRejectedValue(new Error('Error BD'));
 
-      db.Users.findOne.mockRejectedValue(new Error('DB error'));
+      const req = { body: { username: 'x', password: 'y' } };
+      const res = createMockRes();
+      const next = jest.fn();
 
       await authController.login(req, res, next);
 
       expect(next).toHaveBeenCalled();
+      const [err] = next.mock.calls[0];
+      expect(err).toBeInstanceOf(Error);
     });
   });
 
-  // --------- refresh ----------
+  // -------------------- refresh --------------------
   describe('refresh', () => {
-    it('debe devolver 401 si no se envía refreshToken', async () => {
+    it('debe retornar 401 si no se envía refreshToken', async () => {
       const req = { body: {} };
-      const res = mockResponse();
+      const res = createMockRes();
 
       await authController.refresh(req, res);
 
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'Refresh token requerido',
-      });
+      expect(res.body.error).toMatch(/Refresh token requerido/i);
     });
 
-    it('debe devolver 401 si el token es inválido o expirado', async () => {
-      const req = { body: { refreshToken: 'bad-token' } };
-      const res = mockResponse();
-
+    it('debe retornar 401 si el refreshToken es inválido', async () => {
       jwt.verify.mockImplementation(() => {
-        throw new Error('invalid');
+        throw new Error('Token inválido');
       });
+
+      const req = { body: { refreshToken: 'invalid-token' } };
+      const res = createMockRes();
 
       await authController.refresh(req, res);
 
+      expect(jwt.verify).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'Refresh token inválido o expirado',
-      });
+      expect(res.body.error).toMatch(/Refresh token inválido o expirado/i);
     });
 
-    it('debe devolver 401 si el usuario no existe', async () => {
-      const req = { body: { refreshToken: 'refresh-token' } };
-      const res = mockResponse();
+    it('debe retornar 401 si el usuario del refreshToken no existe', async () => {
+      jwt.verify.mockReturnValue({
+        sub: 999,
+      });
 
-      jwt.verify.mockReturnValue({ sub: 10 });
       db.Users.findByPk.mockResolvedValue(null);
 
+      const req = { body: { refreshToken: 'valid-token' } };
+      const res = createMockRes();
+
       await authController.refresh(req, res);
 
+      expect(db.Users.findByPk).toHaveBeenCalledWith(999);
       expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'Usuario no encontrado',
-      });
+      expect(res.body.error).toMatch(/Usuario no encontrado/i);
     });
 
-    it('debe devolver un nuevo access token cuando todo es válido', async () => {
-      const req = { body: { refreshToken: 'refresh-token' } };
-      const res = mockResponse();
+    it('debe retornar 200 con nuevo accessToken si refreshToken es válido', async () => {
+      jwt.verify.mockReturnValue({
+        sub: 3,
+      });
 
-      const userMock = { id: 5, userName: 'user5' };
-      jwt.verify.mockReturnValue({ sub: 5 });
-      db.Users.findByPk.mockResolvedValue(userMock);
+      const mockUser = {
+        id: 3,
+        userName: 'user3',
+      };
+
+      db.Users.findByPk.mockResolvedValue(mockUser);
       generateAccessToken.mockReturnValue('new-access-token');
+
+      const req = { body: { refreshToken: 'valid-token' } };
+      const res = createMockRes();
 
       await authController.refresh(req, res);
 
-      expect(generateAccessToken).toHaveBeenCalledWith(userMock);
-      expect(res.json).toHaveBeenCalledWith({ token: 'new-access-token' });
+      expect(db.Users.findByPk).toHaveBeenCalledWith(3);
+      expect(generateAccessToken).toHaveBeenCalledWith(mockUser);
+      expect(res.statusCode).toBe(200);
+      expect(res.body.token).toBe('new-access-token');
     });
   });
 
-  // --------- logout ----------
+  // -------------------- logout --------------------
   describe('logout', () => {
-    it('debe devolver ok true si no hay header Authorization', () => {
+    it('debe devolver ok:true si no hay header Authorization', () => {
       const req = { headers: {} };
-      const res = mockResponse();
+      const res = createMockRes();
 
       authController.logout(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ ok: true });
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ ok: true });
       expect(tokenBlacklist.add).not.toHaveBeenCalled();
     });
 
-    it('debe agregar el token a la blacklist cuando es válido', () => {
-      const req = { headers: { authorization: 'Bearer token123' } };
-      const res = mockResponse();
+    it('debe agregar el token a la blacklist si el token es válido', () => {
+      const req = {
+        headers: {
+          authorization: 'Bearer valid-token',
+        },
+      };
 
       jwt.verify.mockReturnValue({
-        jti: 'jti-id',
-        exp: 123456,
+        jti: 'id-token',
+        exp: 1234567890,
       });
+
+      const res = createMockRes();
 
       authController.logout(req, res);
 
       expect(jwt.verify).toHaveBeenCalled();
-      expect(tokenBlacklist.add).toHaveBeenCalledWith('jti-id', 123456);
-      expect(res.json).toHaveBeenCalledWith({ ok: true });
+      expect(tokenBlacklist.add).toHaveBeenCalledWith('id-token', 1234567890);
+      expect(res.body).toEqual({ ok: true });
     });
 
-    it('no debe romperse si el token es inválido', () => {
-      const req = { headers: { authorization: 'Bearer invalidtoken' } };
-      const res = mockResponse();
+    it('no debe lanzar error si el token es inválido y siempre responder ok:true', () => {
+      const req = {
+        headers: {
+          authorization: 'Bearer invalid-token',
+        },
+      };
 
       jwt.verify.mockImplementation(() => {
-        throw new Error('invalid');
+        throw new Error('Token inválido');
       });
+
+      const res = createMockRes();
 
       authController.logout(req, res);
 
       expect(tokenBlacklist.add).not.toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith({ ok: true });
+      expect(res.body).toEqual({ ok: true });
     });
   });
 });

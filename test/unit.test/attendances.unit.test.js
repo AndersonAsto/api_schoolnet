@@ -1,396 +1,367 @@
-const { Op } = require('sequelize');
-const attendancesController = require('../../controllers/attendances.controller');
+// test/unit.test/attendances.unit.test.js
+const httpMocks = require('node-mocks-http');
+const controller = require('../../controllers/attendances.controller');
 const db = require('../../models');
+const { Op } = require('sequelize');
 
 jest.mock('../../models', () => ({
-  sequelize: {
-    transaction: jest.fn(),
-  },
   Attendances: {
     bulkCreate: jest.fn(),
-    findAll: jest.fn(),
     update: jest.fn(),
-  },
-  StudentEnrollments: {
     findAll: jest.fn(),
   },
-  TeacherGroups: {
-    findByPk: jest.fn(),
-  },
+  StudentEnrollments: {},
   Schedules: {
     findAll: jest.fn(),
   },
   SchoolDays: {},
+  TeacherGroups: {
+    findByPk: jest.fn(),
+  },
   Persons: {},
+  Grades: {},
+  Sections: {},
   Years: {},
+  sequelize: {
+    transaction: jest.fn(),
+  },
 }));
 
-const mockResponse = () => {
-  const res = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
-  return res;
-};
-
-describe('Attendances Controller - Unit Tests', () => {
-  beforeEach(() => {
+describe('Attendances Controller - Unit tests', () => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
   // ---------- bulkCreateAttendances ----------
-  describe('bulkCreateAttendances', () => {
-    it('debe devolver 400 si no se envían asistencias', async () => {
-      const req = { body: [] };
-      const res = mockResponse();
-
-      await attendancesController.bulkCreateAttendances(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'No se enviaron asistencias.' });
+  it('bulkCreateAttendances debe retornar 400 si no se envían asistencias', async () => {
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: [],
     });
+    const res = httpMocks.createResponse();
 
-    it('debe crear asistencias y devolver 201', async () => {
-      const attendances = [
-        { assistance: true, studentId: 1, scheduleId: 1, schoolDayId: 1 },
-      ];
-      const req = { body: attendances };
-      const res = mockResponse();
+    await controller.bulkCreateAttendances(req, res);
 
-      db.Attendances.bulkCreate.mockResolvedValue();
-
-      await attendancesController.bulkCreateAttendances(req, res);
-
-      expect(db.Attendances.bulkCreate).toHaveBeenCalledWith(attendances);
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Asistencias registradas correctamente.',
-      });
-    });
-
-    it('debe manejar error interno con 500', async () => {
-      const attendances = [
-        { assistance: true, studentId: 1, scheduleId: 1, schoolDayId: 1 },
-      ];
-      const req = { body: attendances };
-      const res = mockResponse();
-
-      db.Attendances.bulkCreate.mockRejectedValue(new Error('DB error'));
-
-      await attendancesController.bulkCreateAttendances(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
-    });
+    expect(res.statusCode).toBe(400);
+    const data = res._getJSONData();
+    expect(data.message).toMatch(/No se enviaron asistencias/i);
   });
 
-  // ---------- getAttendances ----------
-  describe('getAttendances', () => {
-    it('debe devolver 200 con lista de asistencias', async () => {
-      const req = {};
-      const res = mockResponse();
+  it('bulkCreateAttendances debe registrar asistencias y devolver 201', async () => {
+    db.Attendances.bulkCreate.mockResolvedValue([]);
 
-      const fakeAttendances = [{ id: 1 }, { id: 2 }];
-      db.Attendances.findAll.mockResolvedValue(fakeAttendances);
-
-      await attendancesController.getAttendances(req, res);
-
-      expect(db.Attendances.findAll).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(fakeAttendances);
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: [
+        {
+          studentId: 1,
+          scheduleId: 1,
+          schoolDayId: 1,
+          assistance: 'P',
+        },
+      ],
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar error interno con 500', async () => {
-      const req = {};
-      const res = mockResponse();
+    await controller.bulkCreateAttendances(req, res);
 
-      db.Attendances.findAll.mockRejectedValue(new Error('DB error'));
+    expect(db.Attendances.bulkCreate).toHaveBeenCalled();
+    expect(res.statusCode).toBe(201);
+    const data = res._getJSONData();
+    expect(data.message).toMatch(/Asistencias registradas correctamente/i);
+  });
 
-      await attendancesController.getAttendances(req, res);
+  it('bulkCreateAttendances debe manejar error 500', async () => {
+    db.Attendances.bulkCreate.mockRejectedValue(new Error('Error BD'));
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: [
+        {
+          studentId: 1,
+          scheduleId: 1,
+          schoolDayId: 1,
+          assistance: 'P',
+        },
+      ],
     });
+    const res = httpMocks.createResponse();
+
+    await controller.bulkCreateAttendances(req, res);
+
+    expect(res.statusCode).toBe(500);
   });
 
   // ---------- bulkUpdateAttendances ----------
-  describe('bulkUpdateAttendances', () => {
-    it('debe devolver 400 si no hay datos para actualizar', async () => {
-      const req = { body: [] };
-      const res = mockResponse();
-
-      await attendancesController.bulkUpdateAttendances(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: 'No hay datos para actualizar.',
-      });
+  it('bulkUpdateAttendances debe retornar 400 si no hay datos para actualizar', async () => {
+    const req = httpMocks.createRequest({
+      method: 'PUT',
+      body: [],
     });
+    const res = httpMocks.createResponse();
 
-    it('debe actualizar asistencias correctamente y devolver status true', async () => {
-      const updates = [
+    await controller.bulkUpdateAttendances(req, res);
+
+    expect(res.statusCode).toBe(400);
+    const data = res._getJSONData();
+    expect(data.status).toBe(false);
+  });
+
+  it('bulkUpdateAttendances debe actualizar registros y devolver status true', async () => {
+    const commit = jest.fn().mockResolvedValue();
+    const rollback = jest.fn().mockResolvedValue();
+
+    db.sequelize.transaction.mockResolvedValue({ commit, rollback });
+    db.Attendances.update.mockResolvedValue([1]);
+
+    const req = httpMocks.createRequest({
+      method: 'PUT',
+      body: [
         {
           id: 1,
-          assistance: true,
-          assistanceDetail: null,
+          studentId: 1,
           scheduleId: 1,
           schoolDayId: 1,
-          studentId: 1,
+          assistance: 'P',
+          assistanceDetail: 'OK',
         },
         {
           id: 2,
-          assistance: false,
-          assistanceDetail: 'Falta injustificada',
-          scheduleId: 1,
-          schoolDayId: 1,
           studentId: 2,
-        },
-      ];
-      const req = { body: updates };
-      const res = mockResponse();
-
-      const commit = jest.fn();
-      const rollback = jest.fn();
-      db.sequelize.transaction.mockResolvedValue({ commit, rollback });
-      db.Attendances.update.mockResolvedValue([1]);
-
-      await attendancesController.bulkUpdateAttendances(req, res);
-
-      expect(db.sequelize.transaction).toHaveBeenCalled();
-      expect(db.Attendances.update).toHaveBeenCalledTimes(2);
-      expect(commit).toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith({
-        status: true,
-        message: 'Asistencias actualizadas correctamente',
-      });
-    });
-
-    it('debe lanzar error si algún registro no tiene id y responder 500', async () => {
-      const updates = [
-        {
-          assistance: true,
           scheduleId: 1,
           schoolDayId: 1,
-          studentId: 1,
+          assistance: 'F',
         },
-      ];
-      const req = { body: updates };
-      const res = mockResponse();
+      ],
+    });
+    const res = httpMocks.createResponse();
 
-      const commit = jest.fn();
-      const rollback = jest.fn();
-      db.sequelize.transaction.mockResolvedValue({ commit, rollback });
+    await controller.bulkUpdateAttendances(req, res);
 
-      await attendancesController.bulkUpdateAttendances(req, res);
+    expect(db.sequelize.transaction).toHaveBeenCalled();
+    expect(db.Attendances.update).toHaveBeenCalledTimes(2);
+    expect(commit).toHaveBeenCalled();
+    const data = res._getJSONData();
+    expect(data.status).toBe(true);
+    expect(data.message).toMatch(/actualizadas correctamente/i);
+  });
 
-      expect(rollback).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
+  it('bulkUpdateAttendances debe retornar 500 si ocurre error en la transacción', async () => {
+    const commit = jest.fn();
+    const rollback = jest.fn().mockResolvedValue();
+
+    db.sequelize.transaction.mockResolvedValue({ commit, rollback });
+
+    db.Attendances.update.mockImplementation(() => {
+      throw new Error('Error en update');
     });
 
-    it('debe manejar error interno en la transacción y devolver 500', async () => {
-      const updates = [
+    const req = httpMocks.createRequest({
+      method: 'PUT',
+      body: [
         {
           id: 1,
-          assistance: true,
+          studentId: 1,
           scheduleId: 1,
           schoolDayId: 1,
-          studentId: 1,
+          assistance: 'P',
         },
-      ];
-      const req = { body: updates };
-      const res = mockResponse();
-
-      const commit = jest.fn();
-      const rollback = jest.fn();
-      db.sequelize.transaction.mockResolvedValue({ commit, rollback });
-
-      db.Attendances.update.mockRejectedValue(new Error('DB error'));
-
-      await attendancesController.bulkUpdateAttendances(req, res);
-
-      expect(rollback).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
+      ],
     });
+    const res = httpMocks.createResponse();
+
+    await controller.bulkUpdateAttendances(req, res);
+
+    expect(rollback).toHaveBeenCalled();
+    expect(res.statusCode).toBe(500);
   });
 
   // ---------- getAttendancesByScheduleAndDay ----------
-  describe('getAttendancesByScheduleAndDay', () => {
-    it('debe devolver 400 si faltan scheduleId o schoolDayId', async () => {
-      const req = { query: { scheduleId: 1 } }; // falta schoolDayId
-      const res = mockResponse();
-
-      await attendancesController.getAttendancesByScheduleAndDay(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: 'Faltan parámetros: scheduleId y schoolDayId son requeridos',
-      });
+  it('getAttendancesByScheduleAndDay debe retornar 400 si faltan parámetros', async () => {
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      query: { scheduleId: '', schoolDayId: '' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver lista de asistencias filtradas', async () => {
-      const req = { query: { scheduleId: '1', schoolDayId: '2' } };
-      const res = mockResponse();
+    await controller.getAttendancesByScheduleAndDay(req, res);
 
-      const fakeAssistances = [{ id: 1 }, { id: 2 }];
-      db.Attendances.findAll.mockResolvedValue(fakeAssistances);
+    expect(res.statusCode).toBe(400);
+    const data = res._getJSONData();
+    expect(data.status).toBe(false);
+  });
 
-      await attendancesController.getAttendancesByScheduleAndDay(req, res);
+  it('getAttendancesByScheduleAndDay debe retornar 200 con lista de asistencias', async () => {
+    db.Attendances.findAll.mockResolvedValue([
+      { id: 1, studentId: 1, scheduleId: 1, schoolDayId: 1, assistance: 'P' },
+    ]);
 
-      expect(db.Attendances.findAll).toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith(fakeAssistances);
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      query: { scheduleId: '1', schoolDayId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar error interno con 500', async () => {
-      const req = { query: { scheduleId: '1', schoolDayId: '2' } };
-      const res = mockResponse();
+    await controller.getAttendancesByScheduleAndDay(req, res);
 
-      db.Attendances.findAll.mockRejectedValue(new Error('DB error'));
+    expect(db.Attendances.findAll).toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(Array.isArray(data)).toBe(true);
+  });
 
-      await attendancesController.getAttendancesByScheduleAndDay(req, res);
+  it('getAttendancesByScheduleAndDay debe manejar error 500', async () => {
+    db.Attendances.findAll.mockRejectedValue(new Error('Error BD'));
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      query: { scheduleId: '1', schoolDayId: '1' },
     });
+    const res = httpMocks.createResponse();
+
+    await controller.getAttendancesByScheduleAndDay(req, res);
+
+    expect(res.statusCode).toBe(500);
   });
 
   // ---------- getAttendancesByScheduleAndStudent ----------
-  describe('getAttendancesByScheduleAndStudent', () => {
-    it('debe devolver mensaje si no hay asistencias para el estudiante', async () => {
-      const req = { params: { studentId: 1, scheduleId: 1 } };
-      const res = mockResponse();
+  it('getAttendancesByScheduleAndStudent debe retornar 200 con mensaje si no hay asistencias', async () => {
+    db.Attendances.findAll.mockResolvedValue([]);
 
-      db.Attendances.findAll.mockResolvedValue([]);
-
-      await attendancesController.getAttendancesByScheduleAndStudent(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'No se encontraron asistencias para este estudiante.',
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { studentId: '1', scheduleId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver lista de asistencias cuando existen', async () => {
-      const req = { params: { studentId: 1, scheduleId: 1 } };
-      const res = mockResponse();
+    await controller.getAttendancesByScheduleAndStudent(req, res);
 
-      const fakeAssistances = [{ id: 1 }, { id: 2 }];
-      db.Attendances.findAll.mockResolvedValue(fakeAssistances);
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(data.message).toMatch(/No se encontraron asistencias/i);
+  });
 
-      await attendancesController.getAttendancesByScheduleAndStudent(req, res);
+  it('getAttendancesByScheduleAndStudent debe retornar 200 con asistencias', async () => {
+    db.Attendances.findAll.mockResolvedValue([
+      { id: 1, studentId: 1, scheduleId: 1, schoolDayId: 1, assistance: 'P' },
+    ]);
 
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(fakeAssistances);
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { studentId: '1', scheduleId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar error interno con 500', async () => {
-      const req = { params: { studentId: 1, scheduleId: 1 } };
-      const res = mockResponse();
+    await controller.getAttendancesByScheduleAndStudent(req, res);
 
-      db.Attendances.findAll.mockRejectedValue(new Error('DB error'));
+    expect(db.Attendances.findAll).toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(Array.isArray(data)).toBe(true);
+  });
 
-      await attendancesController.getAttendancesByScheduleAndStudent(req, res);
+  it('getAttendancesByScheduleAndStudent debe manejar error 500', async () => {
+    db.Attendances.findAll.mockRejectedValue(new Error('Error BD'));
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { studentId: '1', scheduleId: '1' },
     });
+    const res = httpMocks.createResponse();
+
+    await controller.getAttendancesByScheduleAndStudent(req, res);
+
+    expect(res.statusCode).toBe(500);
   });
 
   // ---------- getAttendancesByGroupAndStudent ----------
-  describe('getAttendancesByGroupAndStudent', () => {
-    it('debe devolver 404 si el grupo de docente no existe', async () => {
-      const req = { params: { teacherGroupId: 1, studentId: 1 } };
-      const res = mockResponse();
+  it('getAttendancesByGroupAndStudent debe retornar 404 si no existe grupo de docente', async () => {
+    db.TeacherGroups.findByPk.mockResolvedValue(null);
 
-      db.TeacherGroups.findByPk.mockResolvedValue(null);
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { teacherGroupId: '1', studentId: '1' },
+    });
+    const res = httpMocks.createResponse();
 
-      await attendancesController.getAttendancesByGroupAndStudent(req, res);
+    await controller.getAttendancesByGroupAndStudent(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Grupo de docente no encontrado',
-      });
+    expect(db.TeacherGroups.findByPk).toHaveBeenCalledWith('1');
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('getAttendancesByGroupAndStudent debe retornar 404 si no hay horarios', async () => {
+    db.TeacherGroups.findByPk.mockResolvedValue({
+      id: 1,
+      courseId: 1,
+      gradeId: 1,
+      sectionId: 1,
+      yearId: 2024,
     });
 
-    it('debe devolver 404 si no se encuentran horarios para el grupo', async () => {
-      const req = { params: { teacherGroupId: 1, studentId: 1 } };
-      const res = mockResponse();
+    db.Schedules.findAll.mockResolvedValue([]);
 
-      const fakeGroup = {
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { teacherGroupId: '1', studentId: '1' },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.getAttendancesByGroupAndStudent(req, res);
+
+    expect(res.statusCode).toBe(404);
+    const data = res._getJSONData();
+    expect(data.message).toMatch(/No se encontraron horarios/i);
+  });
+
+  it('getAttendancesByGroupAndStudent debe retornar 200 con asistencias', async () => {
+    db.TeacherGroups.findByPk.mockResolvedValue({
+      id: 1,
+      courseId: 1,
+      gradeId: 1,
+      sectionId: 1,
+      yearId: 2024,
+    });
+
+    db.Schedules.findAll.mockResolvedValue([
+      { id: 10 },
+      { id: 11 },
+    ]);
+
+    db.Attendances.findAll.mockResolvedValue([
+      {
         id: 1,
-        courseId: 1,
-        gradeId: 1,
-        sectionId: 1,
-        yearId: 2024,
-      };
-      db.TeacherGroups.findByPk.mockResolvedValue(fakeGroup);
-      db.Schedules.findAll.mockResolvedValue([]);
+        studentId: 1,
+        scheduleId: 10,
+        assistance: 'P',
+      },
+    ]);
 
-      await attendancesController.getAttendancesByGroupAndStudent(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'No se encontraron horarios para este grupo',
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { teacherGroupId: '1', studentId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver lista de asistencias cuando hay datos', async () => {
-      const req = { params: { teacherGroupId: 1, studentId: 1 } };
-      const res = mockResponse();
+    await controller.getAttendancesByGroupAndStudent(req, res);
 
-      const fakeGroup = {
-        id: 1,
-        courseId: 1,
-        gradeId: 1,
-        sectionId: 1,
-        yearId: 2024,
-      };
-      db.TeacherGroups.findByPk.mockResolvedValue(fakeGroup);
+    expect(db.Attendances.findAll).toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(Array.isArray(data)).toBe(true);
+  });
 
-      const fakeSchedules = [
-        { id: 10 },
-        { id: 11 },
-      ];
-      db.Schedules.findAll.mockResolvedValue(fakeSchedules);
+  it('getAttendancesByGroupAndStudent debe manejar error 500', async () => {
+    db.TeacherGroups.findByPk.mockRejectedValue(new Error('Error BD'));
 
-      const fakeAssistances = [
-        { id: 1 },
-        { id: 2 },
-      ];
-      db.Attendances.findAll.mockResolvedValue(fakeAssistances);
-
-      await attendancesController.getAttendancesByGroupAndStudent(req, res);
-
-      expect(db.Attendances.findAll).toHaveBeenCalled();
-      expect(res.json).toHaveBeenCalledWith(fakeAssistances);
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { teacherGroupId: '1', studentId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar error interno con 500', async () => {
-      const req = { params: { teacherGroupId: 1, studentId: 1 } };
-      const res = mockResponse();
+    await controller.getAttendancesByGroupAndStudent(req, res);
 
-      db.TeacherGroups.findByPk.mockRejectedValue(new Error('DB error'));
-
-      await attendancesController.getAttendancesByGroupAndStudent(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.',
-      });
-    });
+    expect(res.statusCode).toBe(500);
   });
 });

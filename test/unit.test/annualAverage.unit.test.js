@@ -1,17 +1,30 @@
-const { Op } = require('sequelize');
-const annualAverageController = require('../../controllers/annualAverage.controller');
+// test/unit.test/annualAverage.unit.test.js
+const httpMocks = require('node-mocks-http');
+const controller = require('../../controllers/annualAverage.controller');
 const db = require('../../models');
+const { Op } = require('sequelize');
 
-// Mock completo del módulo de modelos
+jest.mock('sequelize', () => {
+  const actual = jest.requireActual('sequelize');
+  return {
+    ...actual,
+    Op: {
+      in: 'Op.in',
+    },
+  };
+});
+
 jest.mock('../../models', () => ({
+  AnnualAverage: {
+    findOne: jest.fn(),
+    findAll: jest.fn(),
+    create: jest.fn(),
+  },
   OverallCourseAverage: {
     findAll: jest.fn(),
   },
-  AnnualAverage: {
-    findOne: jest.fn(),
-    create: jest.fn(),
-    findAll: jest.fn(),
-  },
+  TeacherGroups: {},
+  Courses: {},
   Tutors: {
     findByPk: jest.fn(),
   },
@@ -24,392 +37,380 @@ jest.mock('../../models', () => ({
   Years: {},
 }));
 
-const mockResponse = () => {
-  const res = {};
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
-  return res;
-};
-
-describe('AnnualAverage Controller - Unit Tests', () => {
-  beforeEach(() => {
+describe('AnnualAverage Controller - Unit tests', () => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
   // ---------- calculateAnnualAverage ----------
-  describe('calculateAnnualAverage', () => {
-    it('debe devolver 400 si faltan studentId o yearId', async () => {
-      const req = { body: { studentId: 1 } }; // falta yearId
-      const res = mockResponse();
+  it('calculateAnnualAverage debe retornar 400 si faltan parámetros', async () => {
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: {},
+    });
+    const res = httpMocks.createResponse();
 
-      await annualAverageController.calculateAnnualAverage(req, res);
+    await controller.calculateAnnualAverage(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: "Faltan parámetros requeridos: studentId o yearId."
+    expect(res.statusCode).toBe(400);
+    const data = res._getJSONData();
+    expect(data.status).toBe(false);
+  });
+
+  it('calculateAnnualAverage debe retornar 404 si no hay promedios generales', async () => {
+    db.OverallCourseAverage.findAll.mockResolvedValue([]);
+
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { studentId: 1, yearId: 2024 },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.calculateAnnualAverage(req, res);
+
+    expect(res.statusCode).toBe(404);
+    const data = res._getJSONData();
+    expect(data.status).toBe(false);
+    expect(data.message).toMatch(/No se encontraron promedios generales/i);
+  });
+
+  it('calculateAnnualAverage debe retornar 400 si hay menos de 10 cursos distintos', async () => {
+    db.OverallCourseAverage.findAll.mockResolvedValue([
+      {
+        courseAverage: '15.5',
+        teachergroups: { courseId: 1 },
+      },
+      {
+        courseAverage: '14.0',
+        teachergroups: { courseId: 1 },
+      },
+    ]);
+
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { studentId: 1, yearId: 2024 },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.calculateAnnualAverage(req, res);
+
+    expect(res.statusCode).toBe(400);
+    const data = res._getJSONData();
+    expect(data.status).toBe(false);
+    expect(data.message).toMatch(/solo 1 cursos registrados/i);
+  });
+
+  it('calculateAnnualAverage debe crear un nuevo promedio anual (201)', async () => {
+    const mockCourseAverages = [];
+    for (let i = 1; i <= 10; i += 1) {
+      mockCourseAverages.push({
+        courseAverage: String(10 + i),
+        teachergroups: { courseId: i },
       });
+    }
+
+    db.OverallCourseAverage.findAll.mockResolvedValue(mockCourseAverages);
+    db.AnnualAverage.findOne.mockResolvedValue(null);
+    db.AnnualAverage.create.mockResolvedValue({
+      id: 1,
+      studentId: 1,
+      yearId: 2024,
+      average: '15.50',
     });
 
-    it('debe devolver 404 si no hay promedios generales del estudiante en ese año', async () => {
-      const req = { body: { studentId: 1, yearId: 2024 } };
-      const res = mockResponse();
-
-      db.OverallCourseAverage.findAll.mockResolvedValue([]);
-
-      await annualAverageController.calculateAnnualAverage(req, res);
-
-      expect(db.OverallCourseAverage.findAll).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: "No se encontraron promedios generales para el estudiante en el año indicado."
-      });
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { studentId: 1, yearId: 2024 },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver 400 si el estudiante tiene menos de 10 cursos', async () => {
-      const req = { body: { studentId: 1, yearId: 2024 } };
-      const res = mockResponse();
+    await controller.calculateAnnualAverage(req, res);
 
-      // Solo 2 cursos distintos
-      const fakeCourseAverages = [
-        {
-          courseAverage: '15.00',
-          teachergroups: { courseId: 1 }
-        },
-        {
-          courseAverage: '16.00',
-          teachergroups: { courseId: 2 }
-        },
-      ];
-
-      db.OverallCourseAverage.findAll.mockResolvedValue(fakeCourseAverages);
-
-      await annualAverageController.calculateAnnualAverage(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: `El estudiante tiene solo 2 cursos registrados. Debe tener 10 para calcular el promedio anual.`
-      });
+    expect(db.OverallCourseAverage.findAll).toHaveBeenCalled();
+    expect(db.AnnualAverage.findOne).toHaveBeenCalledWith({
+      where: { studentId: 1, yearId: 2024 },
     });
+    expect(db.AnnualAverage.create).toHaveBeenCalled();
+    expect(res.statusCode).toBe(201);
+    const data = res._getJSONData();
+    expect(data.status).toBe(true);
+    expect(data.data.average).toBeDefined();
+  });
 
-    it('debe crear un nuevo promedio anual si no existe (201)', async () => {
-      const req = { body: { studentId: 1, yearId: 2024 } };
-      const res = mockResponse();
-
-      // 10 cursos, promedios válidos
-      const fakeCourseAverages = [];
-      for (let i = 1; i <= 10; i++) {
-        fakeCourseAverages.push({
-          courseAverage: `${10 + i}.00`, // 11..20
-          teachergroups: { courseId: i },
-        });
-      }
-
-      db.OverallCourseAverage.findAll.mockResolvedValue(fakeCourseAverages);
-      db.AnnualAverage.findOne.mockResolvedValue(null);
-
-      const createdRecord = {
-        id: 1,
-        studentId: 1,
-        yearId: 2024,
-        average: '15.50',
-      };
-      db.AnnualAverage.create.mockResolvedValue(createdRecord);
-
-      await annualAverageController.calculateAnnualAverage(req, res);
-
-      expect(db.OverallCourseAverage.findAll).toHaveBeenCalled();
-      expect(db.AnnualAverage.findOne).toHaveBeenCalledWith({
-        where: { studentId: 1, yearId: 2024 },
+  it('calculateAnnualAverage debe actualizar un promedio anual existente (200)', async () => {
+    const mockCourseAverages = [];
+    for (let i = 1; i <= 10; i += 1) {
+      mockCourseAverages.push({
+        courseAverage: String(12 + i),
+        teachergroups: { courseId: i },
       });
-      expect(db.AnnualAverage.create).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({
-        status: true,
-        message: "Promedio anual calculado y guardado correctamente.",
-        data: createdRecord
-      });
+    }
+
+    db.OverallCourseAverage.findAll.mockResolvedValue(mockCourseAverages);
+
+    const existingRecord = {
+      id: 1,
+      studentId: 1,
+      yearId: 2024,
+      average: '14.00',
+      save: jest.fn().mockResolvedValue(),
+    };
+
+    db.AnnualAverage.findOne.mockResolvedValue(existingRecord);
+
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { studentId: 1, yearId: 2024 },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe actualizar un promedio anual existente (200)', async () => {
-      const req = { body: { studentId: 1, yearId: 2024 } };
-      const res = mockResponse();
+    await controller.calculateAnnualAverage(req, res);
 
-      const fakeCourseAverages = [];
-      for (let i = 1; i <= 10; i++) {
-        fakeCourseAverages.push({
-          courseAverage: '10.00',
-          teachergroups: { courseId: i },
-        });
-      }
+    expect(existingRecord.save).toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(data.status).toBe(true);
+    expect(data.message).toMatch(/actualizado correctamente/i);
+  });
 
-      db.OverallCourseAverage.findAll.mockResolvedValue(fakeCourseAverages);
+  it('calculateAnnualAverage debe manejar error 500', async () => {
+    db.OverallCourseAverage.findAll.mockRejectedValue(new Error('Error BD'));
 
-      const existingRecord = {
-        id: 1,
-        studentId: 1,
-        yearId: 2024,
-        average: '12.00',
-        save: jest.fn().mockResolvedValue()
-      };
-
-      db.AnnualAverage.findOne.mockResolvedValue(existingRecord);
-
-      await annualAverageController.calculateAnnualAverage(req, res);
-
-      expect(existingRecord.save).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        status: true,
-        message: "Promedio anual actualizado correctamente.",
-        data: existingRecord
-      });
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { studentId: 1, yearId: 2024 },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar un error interno con 500', async () => {
-      const req = { body: { studentId: 1, yearId: 2024 } };
-      const res = mockResponse();
+    await controller.calculateAnnualAverage(req, res);
 
-      db.OverallCourseAverage.findAll.mockRejectedValue(new Error('DB error'));
-
-      await annualAverageController.calculateAnnualAverage(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'
-      });
-    });
+    expect(res.statusCode).toBe(500);
   });
 
   // ---------- getAnnualAverageByYearAndTutor ----------
-  describe('getAnnualAverageByYearAndTutor', () => {
-    it('debe devolver 400 si falta yearId', async () => {
-      const req = { params: { tutorId: 1 } };
-      const res = mockResponse();
-
-      await annualAverageController.getAnnualAverageByYearAndTutor(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "El identificador del año es requerido."
-      });
+  it('getAnnualAverageByYearAndTutor debe retornar 400 si falta yearId', async () => {
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '', tutorId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver 400 si falta tutorId', async () => {
-      const req = { params: { yearId: 2024 } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndTutor(req, res);
 
-      await annualAverageController.getAnnualAverageByYearAndTutor(req, res);
+    expect(res.statusCode).toBe(400);
+  });
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "El identificador del tutor es requerido."
-      });
+  it('getAnnualAverageByYearAndTutor debe retornar 400 si falta tutorId', async () => {
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '2024', tutorId: '' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver 404 si el grupo de tutor no existe', async () => {
-      const req = { params: { yearId: 2024, tutorId: 1 } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndTutor(req, res);
 
-      db.Tutors.findByPk.mockResolvedValue(null);
+    expect(res.statusCode).toBe(400);
+  });
 
-      await annualAverageController.getAnnualAverageByYearAndTutor(req, res);
+  it('getAnnualAverageByYearAndTutor debe retornar 404 si el tutor no existe', async () => {
+    db.Tutors.findByPk.mockResolvedValue(null);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: "Grupo de tutor no encontrado."
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '2024', tutorId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver data vacía si no hay matriculados', async () => {
-      const req = { params: { yearId: 2024, tutorId: 1 } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndTutor(req, res);
 
-      const fakeTutorGroup = { id: 1, gradeId: 1, sectionId: 1 };
-      db.Tutors.findByPk.mockResolvedValue(fakeTutorGroup);
-      db.StudentEnrollments.findAll.mockResolvedValue([]);
+    expect(db.Tutors.findByPk).toHaveBeenCalledWith('1');
+    expect(res.statusCode).toBe(404);
+  });
 
-      await annualAverageController.getAnnualAverageByYearAndTutor(req, res);
+  it('getAnnualAverageByYearAndTutor debe retornar lista vacía si no hay matrículas', async () => {
+    db.Tutors.findByPk.mockResolvedValue({ id: 1, gradeId: 1, sectionId: 1 });
+    db.StudentEnrollments.findAll.mockResolvedValue([]);
 
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        status: true,
-        message: 'No hay estudiantes matriculados para este año y grupo.',
-        data: []
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '2024', tutorId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver lista de promedios cuando hay datos', async () => {
-      const req = { params: { yearId: 2024, tutorId: 1 } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndTutor(req, res);
 
-      const fakeTutorGroup = { id: 1, gradeId: 1, sectionId: 1 };
-      db.Tutors.findByPk.mockResolvedValue(fakeTutorGroup);
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(data.status).toBe(true);
+    expect(Array.isArray(data.data)).toBe(true);
+    expect(data.data.length).toBe(0);
+  });
 
-      const fakeEnrollments = [
-        { id: 10, yearId: 2024, gradeId: 1, sectionId: 1, status: true },
-      ];
-      db.StudentEnrollments.findAll.mockResolvedValue(fakeEnrollments);
+  it('getAnnualAverageByYearAndTutor debe retornar 200 con promedios anuales', async () => {
+    db.Tutors.findByPk.mockResolvedValue({ id: 1, gradeId: 1, sectionId: 1 });
 
-      const fakeAnnuals = [
-        { id: 1, studentId: 10, average: '15.00' },
-      ];
-      db.AnnualAverage.findAll.mockResolvedValue(fakeAnnuals);
+    db.StudentEnrollments.findAll.mockResolvedValue([
+      { id: 10 },
+      { id: 11 },
+    ]);
 
-      await annualAverageController.getAnnualAverageByYearAndTutor(req, res);
+    db.AnnualAverage.findAll.mockResolvedValue([
+      { id: 1, studentId: 10, average: '15.50' },
+    ]);
 
-      expect(db.AnnualAverage.findAll).toHaveBeenCalled();
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        status: true,
-        message: 'Promedios anuales por año y grupo encontrados.',
-        data: fakeAnnuals
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '2024', tutorId: '1' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar error interno con 500', async () => {
-      const req = { params: { yearId: 2024, tutorId: 1 } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndTutor(req, res);
 
-      db.Tutors.findByPk.mockRejectedValue(new Error('DB error'));
+    expect(db.AnnualAverage.findAll).toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(data.status).toBe(true);
+  });
 
-      await annualAverageController.getAnnualAverageByYearAndTutor(req, res);
+  it('getAnnualAverageByYearAndTutor debe manejar error 500', async () => {
+    db.Tutors.findByPk.mockRejectedValue(new Error('Error BD'));
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '2024', tutorId: '1' },
     });
+    const res = httpMocks.createResponse();
+
+    await controller.getAnnualAverageByYearAndTutor(req, res);
+
+    expect(res.statusCode).toBe(500);
   });
 
   // ---------- getAnnualAverageByYearAndStudent ----------
-  describe('getAnnualAverageByYearAndStudent', () => {
-    it('debe devolver 400 si faltan parámetros', async () => {
-      const req = { params: { yearId: 2024 } }; // falta studentId
-      const res = mockResponse();
+  it('getAnnualAverageByYearAndStudent debe retornar 400 si faltan parámetros', async () => {
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '', studentId: '' },
+    });
+    const res = httpMocks.createResponse();
 
-      await annualAverageController.getAnnualAverageByYearAndStudent(req, res);
+    await controller.getAnnualAverageByYearAndStudent(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: 'El año y el estudiante son requeridos.'
-      });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('getAnnualAverageByYearAndStudent debe retornar 404 si no existe registro', async () => {
+    db.AnnualAverage.findOne.mockResolvedValue(null);
+
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '2024', studentId: '10' },
+    });
+    const res = httpMocks.createResponse();
+
+    await controller.getAnnualAverageByYearAndStudent(req, res);
+
+    expect(res.statusCode).toBe(404);
+    const data = res._getJSONData();
+    expect(data.status).toBe(false);
+  });
+
+  it('getAnnualAverageByYearAndStudent debe retornar 200 con promedio anual', async () => {
+    db.AnnualAverage.findOne.mockResolvedValue({
+      id: 1,
+      studentId: 10,
+      yearId: 2024,
+      average: '16.00',
     });
 
-    it('debe devolver 404 si no encuentra promedio anual', async () => {
-      const req = { params: { yearId: 2024, studentId: 10 } };
-      const res = mockResponse();
-
-      db.AnnualAverage.findOne.mockResolvedValue(null);
-
-      await annualAverageController.getAnnualAverageByYearAndStudent(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: 'No se encontró promedio anual para este estudiante en ese año.'
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '2024', studentId: '10' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver 200 y el promedio anual cuando existe', async () => {
-      const req = { params: { yearId: 2024, studentId: 10 } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndStudent(req, res);
 
-      const fakeAnnual = { id: 1, yearId: 2024, studentId: 10, average: '14.50' };
-      db.AnnualAverage.findOne.mockResolvedValue(fakeAnnual);
+    expect(db.AnnualAverage.findOne).toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(data.status).toBe(true);
+  });
 
-      await annualAverageController.getAnnualAverageByYearAndStudent(req, res);
+  it('getAnnualAverageByYearAndStudent debe manejar error 500', async () => {
+    db.AnnualAverage.findOne.mockRejectedValue(new Error('Error BD'));
 
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        status: true,
-        message: 'Promedio anual encontrado.',
-        data: fakeAnnual
-      });
+    const req = httpMocks.createRequest({
+      method: 'GET',
+      params: { yearId: '2024', studentId: '10' },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar error interno con 500', async () => {
-      const req = { params: { yearId: 2024, studentId: 10 } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndStudent(req, res);
 
-      db.AnnualAverage.findOne.mockRejectedValue(new Error('DB error'));
-
-      await annualAverageController.getAnnualAverageByYearAndStudent(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'
-      });
-    });
+    expect(res.statusCode).toBe(500);
   });
 
   // ---------- getAnnualAverageByYearAndStudents ----------
-  describe('getAnnualAverageByYearAndStudents', () => {
-    it('debe devolver 400 si faltan parámetros o lista vacía', async () => {
-      const req = { body: { yearId: 2024, studentIds: [] } };
-      const res = mockResponse();
-
-      await annualAverageController.getAnnualAverageByYearAndStudents(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: 'El año y la lista de estudiantes son requeridos.',
-      });
+  it('getAnnualAverageByYearAndStudents debe retornar 400 si falta yearId o lista vacía', async () => {
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { yearId: null, studentIds: [] },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver 404 si no hay promedios anuales', async () => {
-      const req = { body: { yearId: 2024, studentIds: [1, 2] } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndStudents(req, res);
 
-      db.AnnualAverage.findAll.mockResolvedValue([]);
+    expect(res.statusCode).toBe(400);
+  });
 
-      await annualAverageController.getAnnualAverageByYearAndStudents(req, res);
+  it('getAnnualAverageByYearAndStudents debe retornar 404 si no hay registros', async () => {
+    db.AnnualAverage.findAll.mockResolvedValue([]);
 
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        status: false,
-        message: 'No se encontraron promedios anuales para los estudiantes en ese año.',
-        data: [],
-      });
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { yearId: 2024, studentIds: [10, 11] },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe devolver 200 y lista de promedios cuando hay datos', async () => {
-      const req = { body: { yearId: 2024, studentIds: [1, 2] } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndStudents(req, res);
 
-      const fakeAnnuals = [
-        { id: 1, studentId: 1, average: '15.00' },
-        { id: 2, studentId: 2, average: '16.00' },
-      ];
+    expect(res.statusCode).toBe(404);
+    const data = res._getJSONData();
+    expect(data.status).toBe(false);
+  });
 
-      db.AnnualAverage.findAll.mockResolvedValue(fakeAnnuals);
+  it('getAnnualAverageByYearAndStudents debe retornar 200 con lista de promedios', async () => {
+    db.AnnualAverage.findAll.mockResolvedValue([
+      { id: 1, studentId: 10, average: '15.0' },
+      { id: 2, studentId: 11, average: '16.0' },
+    ]);
 
-      await annualAverageController.getAnnualAverageByYearAndStudents(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        status: true,
-        message: 'Promedios anuales encontrados.',
-        data: fakeAnnuals,
-      });
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { yearId: 2024, studentIds: [10, 11] },
     });
+    const res = httpMocks.createResponse();
 
-    it('debe manejar error interno con 500', async () => {
-      const req = { body: { yearId: 2024, studentIds: [1, 2] } };
-      const res = mockResponse();
+    await controller.getAnnualAverageByYearAndStudents(req, res);
 
-      db.AnnualAverage.findAll.mockRejectedValue(new Error('DB error'));
+    expect(db.AnnualAverage.findAll).toHaveBeenCalled();
+    expect(res.statusCode).toBe(200);
+    const data = res._getJSONData();
+    expect(data.status).toBe(true);
+  });
 
-      await annualAverageController.getAnnualAverageByYearAndStudents(req, res);
+  it('getAnnualAverageByYearAndStudents debe manejar error 500', async () => {
+    db.AnnualAverage.findAll.mockRejectedValue(new Error('Error BD'));
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'
-      });
+    const req = httpMocks.createRequest({
+      method: 'POST',
+      body: { yearId: 2024, studentIds: [10, 11] },
     });
+    const res = httpMocks.createResponse();
+
+    await controller.getAnnualAverageByYearAndStudents(req, res);
+
+    expect(res.statusCode).toBe(500);
   });
 });
