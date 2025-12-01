@@ -28,6 +28,12 @@ variables:
   MYSQL_PASSWORD: ci_password
   MYSQL_DATABASE: schoolnet_testdb
 
+  JWT_SECRET: "l+nTTdZdeu/26Kzd5jV9VY4M6s5MAVUAoAIG8n9uwlCTp2hBe0UnS1gSllsIB6mF3tCWYP7s0RSZYVWXlVoUzAmDG9TGzSRXs8FtNFDxIdY"
+  JWT_REFRESH_SECRET: "ORpgJf8Pxy3576KjO+Lifm9Ns92wANaPksoraxLcBwIPCgfQNJjlzojDUTuzYUAnXXq9LHuOaWTFn+mhMA5LtwkAs7CiXZHYGKNMra3XUzNPTSa9fgs1Liq5OyVNsho6Ts6ruQKzC13rhlBMmJ0NZRwYpsfCDCMuNbY7zfwy5SE"
+  JWT_EXPIRES_IN: "1h"
+  JWT_REFRESH_EXPIRES_IN: "7d"
+  JWT_ISS: "schoolnet-api"
+
 cache:
   paths:
     - node_modules/
@@ -38,21 +44,25 @@ test:
     - node -v
     - npm -v
     - npm ci
-
-    # Esperar a la ejecución de MYSQL
+    
+    - apt-get update && apt-get install -y default-mysql-client
+    # Esperar a que MySQL esté listo (el servicio ya está definido)
     - echo "Esperando a MySQL..."
-    - >
-      for i in `seq 1 30`;
-      do
-        nc -z mysql 3306 && echo "MySQL está arriba" && break;
-        echo "MySQL aún no listo ($i)...";
-        sleep 2;
+    - |
+      for i in `seq 1 30`; do
+        mysqladmin ping -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" --silent && echo "MySQL está arriba" && break
+        echo "MySQL aún no listo ($i)..."
+        sleep 2
       done
 
-    # Sequelize CLI:
-    - npx sequelize db:migrate || echo "Sin migraciones"
-    - npx sequelize db:seed:all || echo "Sin seeds"
+    # Dar permisos al usuario de CI
+    - echo "Configurando permisos para ci_user..."
+    - mysql -h "$DB_HOST" -u root -p"$MYSQL_ROOT_PASSWORD" -e "GRANT ALL PRIVILEGES ON $DB_TEST_NAME.* TO '$DB_USER'@'%'; FLUSH PRIVILEGES;"
 
-    # Pruebas unitarias y de integración
+    # Migraciones y seeds en test
+    - npm run db:migrate:test
+    - npm run db:seed:test
+
+    # Correr tests
     - npm run test:unit
     - npm run test:integration

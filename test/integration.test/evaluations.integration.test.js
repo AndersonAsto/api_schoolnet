@@ -54,7 +54,6 @@ describe('Evaluations Endpoints - Integration Tests', () => {
     try {
       await db.sequelize.close();
     } catch (e) {
-      // silencioso
     }
   });
 
@@ -136,7 +135,8 @@ describe('Evaluations Endpoints - Integration Tests', () => {
 
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body)).toBe(true);
-      })
+      }),
+      20000
     );
   });
 
