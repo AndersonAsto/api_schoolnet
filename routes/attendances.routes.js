@@ -3,7 +3,6 @@ const router = express.Router();
 const attendancesControllers = require('../controllers/attendances.controller');
 
 router.post('/assistances/bulkCreate', attendancesControllers.bulkCreateAttendances);
-// router.get('/assistances/list', attendancesControllers.getAttendances);
 router.put("/assistances/bulkUpdate", attendancesControllers.bulkUpdateAttendances);
 
 router.get('/assistances/byScheduleAndDay', attendancesControllers.getAttendancesByScheduleAndDay);

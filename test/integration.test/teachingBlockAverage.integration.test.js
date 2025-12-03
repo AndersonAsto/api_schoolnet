@@ -69,7 +69,6 @@ describe('TeachingBlockAverage Endpoints - Integration', () => {
           teachingBlockId: EXISTING_TEACHING_BLOCK_ID,
         });
 
-      // Si todo está bien en BD, será 200; si faltan datos, algún otro código
       expect([200, 400, 404, 500]).toContain(res.status);
     })
   );

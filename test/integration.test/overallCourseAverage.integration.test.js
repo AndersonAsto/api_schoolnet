@@ -93,7 +93,7 @@ describe('OverallCourseAverage Endpoints - Integration Tests', () => {
 
         if (res.status === 200) {
           expect(res.body).toHaveProperty('courseAverage');
-          createdOverallAverage = res.body.courseAverage;
+          
         }
       })
     );

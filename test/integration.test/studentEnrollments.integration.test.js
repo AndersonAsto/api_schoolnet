@@ -57,7 +57,6 @@ describe('StudentEnrollments Endpoints - Integration', () => {
           sectionId: EXISTING_SECTION_ID,
         });
 
-      // Si todo está bien, 201; si hay problemas de FK/unique, normalmente 500 o 400
       expect([201, 400, 500]).toContain(res.status);
 
       if (res.status === 201) {

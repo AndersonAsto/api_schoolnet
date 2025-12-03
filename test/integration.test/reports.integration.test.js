@@ -71,7 +71,6 @@ describe('Reports Endpoint - Integration', () => {
         `/api/reports/student/${EXISTING_ENROLLMENT_ID}/year/${EXISTING_YEAR_ID}`
       );
 
-      // Puede ser 200 (si todo está configurado) o 500 si falta algo
       expect([200, 500, 404]).toContain(res.status);
 
       if (res.status === 200) {

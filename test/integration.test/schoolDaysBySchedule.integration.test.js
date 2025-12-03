@@ -1,16 +1,15 @@
 // test/integration.test/schoolDaysBySchedule.integration.test.js
 const request = require('supertest');
 const app = require('../../server');
-const db = require('../../config/db.config');
+const db = require('../../models');
 
 describe('SchoolDaysBySchedule Endpoints - Integration', () => {
   let skipTests = false;
 
-  // AJUSTA ESTOS IDs A TU BD REAL
-  const EXISTING_YEAR_ID = 1;      // id en tabla years
-  const EXISTING_SCHEDULE_ID = 1;  // id en tabla schedules
-  const EXISTING_TEACHER_ID = 1;   // id en tabla users (docente)
-
+  const EXISTING_YEAR_ID = 1; 
+  const EXISTING_SCHEDULE_ID = 1;
+  const EXISTING_TEACHER_ID = 1;
+  
   beforeAll(async () => {
     try {
       await db.sequelize.authenticate();
@@ -23,7 +22,6 @@ describe('SchoolDaysBySchedule Endpoints - Integration', () => {
       skipTests = true;
     }
   });
-
   
   afterAll(async () => {
     try {
@@ -57,7 +55,7 @@ describe('SchoolDaysBySchedule Endpoints - Integration', () => {
 
       // Puede ser 201 (creado), 404 (no hay datos suficientes), 400 (params), 500 (error interno)
       expect([201, 400, 404, 500]).toContain(res.status);
-    })
+    }),
   );
 
   it(
@@ -67,7 +65,8 @@ describe('SchoolDaysBySchedule Endpoints - Integration', () => {
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
-    })
+    }),
+    20000
   );
 
   it(

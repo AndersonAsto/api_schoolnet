@@ -109,93 +109,158 @@ exports.getSchoolDaysBySchedule = async (req, res) => {
     }
 };
 
+async function findTeacherOrThrow(teacherId) {
+    const teacher = await db.Users.findByPk(teacherId);
+    if (!teacher) {
+        const error = new Error("DOCENTE_NO_ENCONTRADO");
+        throw error;
+    }
+    return teacher;
+}
+
+async function findSchedulesByTeacherAndYearOrThrow(teacherId, yearId) {
+    const schedules = await db.Schedules.findAll({
+        where: { teacherId, yearId },
+        attributes: ['id', 'weekday'],
+        order: [['id', 'ASC']]
+    });
+
+    if (!schedules.length) {
+        const error = new Error("DOCENTE_SIN_HORARIOS");
+        throw error;
+    }
+
+    return schedules;
+}
+
+async function findTeachingBlocksByYearOrThrow(yearId) {
+    const teachingBlocks = await db.TeachingBlocks.findAll({
+        where: { yearId, status: 1 },
+        order: [['startDay', 'ASC']]
+    });
+
+    if (!teachingBlocks.length) {
+        const error = new Error("SIN_BLOQUES_LECTIVOS");
+        throw error;
+    }
+
+    return teachingBlocks;
+}
+
+async function buildScheduleSchoolDayRecords({ yearId, schedules, teachingBlocks }) {
+    let totalRecords = 0;
+    const allRecords = [];
+
+    for (const schedule of schedules) {
+        const weekday = schedule.weekday?.toLowerCase();
+        if (!weekday) continue;
+
+        const schoolDays = await db.SchoolDays.findAll({
+            where: { yearId, weekday, status: 1 },
+            order: [['teachingDay', 'ASC']]
+        });
+
+        for (const day of schoolDays) {
+            const block = teachingBlocks.find(b =>
+                new Date(day.teachingDay) >= new Date(b.startDay) &&
+                new Date(day.teachingDay) <= new Date(b.endDay)
+            );
+
+            if (block) {
+                allRecords.push({
+                    yearId,
+                    scheduleId: schedule.id,
+                    teachingBlockId: block.id,
+                    schoolDayId: day.id,
+                    estado: true
+                });
+                totalRecords++;
+            }
+        }
+    }
+
+    return { totalRecords, allRecords };
+}
+
+// === Controlador ===
 exports.bulkCreateSchoolDaysByYearAndTeacher = async (req, res) => {
-    const {yearId, teacherId} = req.body;
+    const { yearId, teacherId } = req.body;
 
     if (!yearId || !teacherId) {
-        return res.status(400).json({message: "Debe proporcionar yearId y teacherId"});
+        return res.status(400).json({ message: "Debe proporcionar yearId y teacherId" });
     }
 
     const t = await db.sequelize.transaction();
 
     try {
-        // Verificar que el docente exista
-        const teacher = await db.Users.findByPk(teacherId);
-        if (!teacher) {
-            return res.status(404).json({message: "Docente no encontrado"});
-        }
+        // 1. Validaciones base
+        await findTeacherOrThrow(teacherId);
+        const schedules = await findSchedulesByTeacherAndYearOrThrow(teacherId, yearId);
+        const teachingBlocks = await findTeachingBlocksByYearOrThrow(yearId);
 
-        // Obtener todos los horarios del docente en ese año
-        const schedules = await db.Schedules.findAll({
-            where: {teacherId, yearId},
-            attributes: ['id', 'weekday'],
-            order: [['id', 'ASC']]
+        // 2. Generar TODOS los registros posibles
+        const { totalRecords, allRecords } = await buildScheduleSchoolDayRecords({
+            yearId,
+            schedules,
+            teachingBlocks
         });
 
-        if (!schedules.length) {
-            return res.status(404).json({message: "El docente no tiene horarios asignados en este año"});
-        }
+        // 3. Ver qué combinaciones ya existen para evitar duplicados
+        //    Tomamos los scheduleIds y schoolDayIds únicos a partir de allRecords
+        const scheduleIds = [...new Set(allRecords.map(r => r.scheduleId))];
+        const schoolDayIds = [...new Set(allRecords.map(r => r.schoolDayId))];
 
-        // Obtener todos los bloques lectivos del año
-        const teachingBlocks = await db.TeachingBlocks.findAll({
-            where: {yearId, status: 1},
-            order: [['startDay', 'ASC']]
+        const existentes = await db.SchoolDaysBySchedule.findAll({
+            where: {
+                yearId,
+                scheduleId: scheduleIds,
+                schoolDayId: schoolDayIds
+            },
+            attributes: ['yearId', 'scheduleId', 'schoolDayId']
         });
 
-        if (!teachingBlocks.length) {
-            return res.status(404).json({message: "No hay bloques lectivos definidos para este año"});
-        }
+        const existentesSet = new Set(
+            existentes.map(e => `${e.yearId}-${e.scheduleId}-${e.schoolDayId}`)
+        );
 
-        let totalRecords = 0;
-        const allRecords = [];
+        const nuevosRecords = allRecords.filter(r => {
+            const key = `${r.yearId}-${r.scheduleId}-${r.schoolDayId}`;
+            return !existentesSet.has(key);
+        });
 
-        // Procesar cada horario
-        for (const schedule of schedules) {
-            const weekday = schedule.weekday?.toLowerCase();
-            if (!weekday) continue;
+        const cantidadDuplicados = allRecords.length - nuevosRecords.length;
 
-            // Buscar los días lectivos del año que coincidan con el día del horario
-            const schoolDays = await db.SchoolDays.findAll({
-                where: {yearId, weekday, status: 1},
-                order: [['teachingDay', 'ASC']]
-            });
-
-            // Crear registros ScheduleSchoolDays
-            for (const day of schoolDays) {
-                const block = teachingBlocks.find(b =>
-                    new Date(day.teachingDay) >= new Date(b.startDay) &&
-                    new Date(day.teachingDay) <= new Date(b.endDay)
-                );
-
-                if (block) {
-                    allRecords.push({
-                        yearId,
-                        scheduleId: schedule.id,
-                        teachingBlockId: block.id,
-                        schoolDayId: day.id,
-                        estado: true
-                    });
-                    totalRecords++;
-                }
-            }
-        }
-
-        // Insertar todos los registros generados
-        if (allRecords.length > 0) {
-            await db.SchoolDaysBySchedule.bulkCreate(allRecords, {transaction: t});
+        // 4. Insertar solo los nuevos registros
+        if (nuevosRecords.length > 0) {
+            await db.SchoolDaysBySchedule.bulkCreate(nuevosRecords, { transaction: t });
         }
 
         await t.commit();
 
-        res.status(201).json({
-            message: `Se generaron ${totalRecords} días lectivos para el docente ${teacherId} en el año ${yearId}`,
+        return res.status(201).json({
+            message: `Se generaron ${nuevosRecords.length} días lectivos nuevos para el docente ${teacherId} en el año ${yearId}`,
+            totalPosibles: totalRecords,
+            totalInsertados: nuevosRecords.length,
+            totalDuplicadosIgnorados: cantidadDuplicados,
             totalHorarios: schedules.length,
-            registros: allRecords
+            registrosInsertados: nuevosRecords
         });
 
     } catch (error) {
+        await t.rollback();
+
+        if (error.message === "DOCENTE_NO_ENCONTRADO") {
+            return res.status(404).json({ message: "Docente no encontrado" });
+        }
+        if (error.message === "DOCENTE_SIN_HORARIOS") {
+            return res.status(404).json({ message: "El docente no tiene horarios asignados en este año" });
+        }
+        if (error.message === "SIN_BLOQUES_LECTIVOS") {
+            return res.status(404).json({ message: "No hay bloques lectivos definidos para este año" });
+        }
+
         console.error(error.message);
-        res.status(500).json({message: 'Error interno del servidor. Inténtelo de nuevo más tarde.'});
+        return res.status(500).json({ message: 'Error interno del servidor. Inténtelo de nuevo más tarde.' });
     }
 };
 

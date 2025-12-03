@@ -61,7 +61,6 @@ describe('Schedules Endpoints - Integration', () => {
         .post('/api/schedules/create')
         .send(body);
 
-      // Puede ser 201 (si todo OK) o 500 si falta FK
       expect([201, 500, 400]).toContain(res.status);
 
       if (res.status === 201) {

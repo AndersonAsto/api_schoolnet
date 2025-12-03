@@ -55,7 +55,6 @@ describe('TeacherAssignments Endpoints - Integration', () => {
           courseId: EXISTING_COURSE_ID,
         });
 
-      // Aceptamos 201 si todo OK, o 400/500 si hay temas de FK/unique
       expect([201, 400, 500]).toContain(res.status);
 
       if (res.status === 201) {

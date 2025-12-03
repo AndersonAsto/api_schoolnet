@@ -80,23 +80,6 @@ describe('Qualifications Endpoints - Integration Tests', () => {
     );
   });
 
-  // ---------- GET /qualifications/list ----------
-  /*
-  describe('GET /qualifications/list', () => {
-    it(
-      'debe devolver 200 o 500 y, si 200, un array',
-      safeTest(async () => {
-        const res = await request(app).get('/api/qualifications/list');
-
-        expect([200, 500]).toContain(res.status);
-        if (res.status === 200) {
-          expect(Array.isArray(res.body)).toBe(true);
-        }
-      })
-    );
-  });
-  */
-  
   // ---------- PUT /qualifications/bulkUpdate ----------
   describe('PUT /qualifications/bulkUpdate', () => {
     it(

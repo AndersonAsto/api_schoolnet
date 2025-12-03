@@ -1,4 +1,3 @@
-// test/jest.teardown.js
 const sequelize = require('../config/db.config');
 
 afterAll(async () => {

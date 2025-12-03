@@ -1,5 +1,4 @@
-// En producción usar Redis para múltiples instancias
-const blacklist = new Map(); // jti -> expUnix
+const blacklist = new Map();
 
 function sweep() {
     const now = Math.floor(Date.now() / 1000);

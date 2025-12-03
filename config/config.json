@@ -1,0 +1,33 @@
+{
+    "development": {
+      "username": "root",
+      "password": "",
+      "database": "schoolnetdb",
+      "host": "localhost",
+      "port": 3306,
+      "dialect": "mysql",
+      "timezone": "-05:00",
+      "logging": true
+    },
+    "test": {
+      "username": "ci_user",
+      "password": "ci_password",
+      "database": "schoolnet_testdb",
+      "host": "mysql",
+      "port": 3306,
+      "dialect": "mysql",
+      "timezone": "-05:00",
+      "logging": false
+    },
+    "production": {
+      "username": "root",
+      "password": "",
+      "database": "schoolnetdb",
+      "host": "localhost",
+      "port": 3306,
+      "dialect": "mysql",
+      "timezone": "-05:00",
+      "logging": false
+    }
+  }
+  

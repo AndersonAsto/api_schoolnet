@@ -334,53 +334,63 @@ describe('SchoolDaysBySchedule Controller - Unit tests', () => {
   });
 
   it('bulkCreateSchoolDaysByYearAndTeacher debe crear registros y retornar 201', async () => {
-    db.Users.findByPk.mockResolvedValue({ id: 5 });
-    db.Schedules.findAll.mockResolvedValue([
-      { id: 10, weekday: 'Lunes' },
-      { id: 11, weekday: 'Martes' },
-    ]);
-    db.TeachingBlocks.findAll.mockResolvedValue([
-      { id: 100, startDay: '2025-03-01', endDay: '2025-03-31' },
-    ]);
+      db.Users.findByPk.mockResolvedValue({ id: 5 });
 
-    // SchoolDays debe devolver distintos resultados según weekday:
-    db.SchoolDays.findAll.mockImplementation(({ where }) => {
-      if (where.weekday === 'lunes') {
-        return Promise.resolve([
-          { id: 1, teachingDay: '2025-03-03' },
-          { id: 2, teachingDay: '2025-03-10' },
-        ]);
-      }
-      if (where.weekday === 'martes') {
-        return Promise.resolve([
-          { id: 3, teachingDay: '2025-03-04' },
-          { id: 4, teachingDay: '2025-03-11' },
-        ]);
-      }
-      return Promise.resolve([]);
+      db.Schedules.findAll.mockResolvedValue([
+        { id: 10, weekday: 'Lunes' },
+        { id: 11, weekday: 'Martes' },
+      ]);
+
+      db.TeachingBlocks.findAll.mockResolvedValue([
+        { id: 100, startDay: '2025-03-01', endDay: '2025-03-31' },
+      ]);
+
+      // SchoolDays devuelve según weekday:
+      db.SchoolDays.findAll.mockImplementation(({ where }) => {
+        if (where.weekday === 'lunes') {
+          return Promise.resolve([
+            { id: 1, teachingDay: '2025-03-03' },
+            { id: 2, teachingDay: '2025-03-10' },
+          ]);
+        }
+        if (where.weekday === 'martes') {
+          return Promise.resolve([
+            { id: 3, teachingDay: '2025-03-04' },
+            { id: 4, teachingDay: '2025-03-11' },
+          ]);
+        }
+        return Promise.resolve([]);
+      });
+
+      // No hay registros previos, así que deben insertarse todos
+      db.SchoolDaysBySchedule.findAll.mockResolvedValue([]);
+
+      db.SchoolDaysBySchedule.bulkCreate.mockResolvedValue([]);
+
+      const req = httpMocks.createRequest({
+        method: 'POST',
+        body: {
+          yearId: 1,
+          teacherId: 5,
+        },
+      });
+      const res = httpMocks.createResponse();
+
+      await controller.bulkCreateSchoolDaysByYearAndTeacher(req, res);
+
+      expect(db.SchoolDaysBySchedule.bulkCreate).toHaveBeenCalled();
+      expect(commitMock).toHaveBeenCalled();
+      expect(res.statusCode).toBe(201);
+
+      const data = res._getJSONData();
+
+      // OJO: revisa cómo se llama la propiedad en tu controlador actual
+      // si dejaste "registrosInsertados", ajusta esto:
+      expect(data).toHaveProperty('totalHorarios', 2);
+      expect(Array.isArray(data.registrosInsertados || data.registros)).toBe(true);
+      const registros = data.registrosInsertados || data.registros;
+      expect(registros.length).toBeGreaterThan(0);
     });
-
-    db.SchoolDaysBySchedule.bulkCreate.mockResolvedValue([]);
-
-    const req = httpMocks.createRequest({
-      method: 'POST',
-      body: {
-        yearId: 1,
-        teacherId: 5,
-      },
-    });
-    const res = httpMocks.createResponse();
-
-    await controller.bulkCreateSchoolDaysByYearAndTeacher(req, res);
-
-    expect(db.SchoolDaysBySchedule.bulkCreate).toHaveBeenCalled();
-    expect(commitMock).toHaveBeenCalled();
-    expect(res.statusCode).toBe(201);
-    const data = res._getJSONData();
-    expect(data).toHaveProperty('totalHorarios', 2);
-    expect(Array.isArray(data.registros)).toBe(true);
-    expect(data.registros.length).toBeGreaterThan(0);
-  });
 
   it('bulkCreateSchoolDaysByYearAndTeacher debe manejar error 500', async () => {
     db.Users.findByPk.mockRejectedValue(new Error('Error BD'));

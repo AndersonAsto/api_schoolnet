@@ -46,7 +46,7 @@ test:
     - npm ci
     
     - apt-get update && apt-get install -y default-mysql-client
-    # Esperar a que MySQL esté listo (el servicio ya está definido)
+    # Esperar a que MySQL esté listo
     - echo "Esperando a MySQL..."
     - |
       for i in `seq 1 30`; do

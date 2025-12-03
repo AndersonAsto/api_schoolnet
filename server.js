@@ -80,7 +80,6 @@ app.get('/', (req, res) => {
 
 const errorHandler = require('./middlewares/error.middleware');
 
-// Conexión a la base de datos y levantado del servidor
 sequelize
     .authenticate()
     .then(() => {
